@@ -27,7 +27,7 @@
              (declare (ignore c))
              (format s "Login failed"))))
 
-(defgeneric find-user-from-request-parameters ((authorizer authorizer))
+(defgeneric find-user-from-request-parameters (authorizer)
   (:documentation "Return the user that is associated with the current
 request or NIL.")
   (:method ((authorizer bknr-authorizer))
