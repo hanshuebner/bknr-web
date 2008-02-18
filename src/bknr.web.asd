@@ -1,16 +1,11 @@
 (in-package :cl-user)
 
-(defpackage :bknr.system
-  (:use :cl :asdf)
-  (:export :*bknr-directory*))
+(defpackage :bknr.web.system
+  (:use :cl :asdf))
 
-(in-package :bknr.system)
+(in-package :bknr.web.system)
 
-(defparameter *bknr-directory*
-  (make-pathname :name nil :type nil :version nil
-		 :defaults (parse-namestring *load-truename*)))
-
-(defsystem :bknr-web
+(defsystem :bknr.web
     :name "Baikonour - Base modules"
     :author "Hans Huebner <hans@huebner.org>"
     :author "Manuel Odendahl <manuel@bl0rg.net>"
@@ -26,14 +21,14 @@
 		 :md5
 		 :cxml
 		 :unit-test
-		 :bknr-utils
-		 :bknr-xml
+		 :bknr.utils
+		 :bknr.xml
 		 :hunchentoot
 		 :xhtmlgen
 		 :puri
 		 :usocket
-		 :bknr-datastore
-		 :bknr-data-impex
+		 :bknr.datastore
+		 :bknr.data.impex
 		 :parenscript)
 
     :components ((:file "packages")
