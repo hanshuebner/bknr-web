@@ -27,18 +27,21 @@
              (declare (ignore c))
              (format s "Login failed"))))
 
-(defun find-user-from-request-parameters ()
-  (with-query-params (__username __password)
-    (unless (and __username __password
-                 (not (equal __username ""))
-                 (not (equal __password "")))
-      (return-from find-user-from-request-parameters nil))
-    (let ((user (find-user __username)))
+(defgeneric find-user-from-request-parameters ((authorizer authorizer))
+  (:documentation "Return the user that is associated with the current
+request or NIL.")
+  (:method ((authorizer bknr-authorizer))
+    (with-query-params (__username __password)
+      (unless (and __username __password
+                   (not (equal __username ""))
+                   (not (equal __password "")))
+        (return-from find-user-from-request-parameters nil))
+      (let ((user (find-user __username)))
 	(when (and user
                    (not (user-disabled user))
 		   (verify-password user __password))
           (return-from find-user-from-request-parameters user)))
-    (error 'login-failure)))
+      (error 'login-failure))))
 
 (defmethod authorize ((authorizer bknr-authorizer))
   ;; Catch any errors that occur during request body processing

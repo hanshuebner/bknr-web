@@ -283,10 +283,9 @@ authorization?"))
 (defun ensure-bknr-session ()
   "Ensure that the BKNR-SESSION session variable is set and that it
 belongs to the user that is specified in the request."
-  (let ((request-user (find-user-from-request-parameters)))
+  (let ((request-user (find-user-from-request-parameters (website-authorizer *website*))))
     (unless (and (session-value 'bknr-session)
-                 (equal (bknr-session-user)
-                        (find-user-from-request-parameters)))
+                 (eq (bknr-session-user) request-user))
       (setf (session-value 'bknr-session)
             (make-instance 'bknr-session :user (or request-user
                                                    (find-user "anonymous")))))))
