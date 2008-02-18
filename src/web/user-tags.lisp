@@ -1,0 +1,58 @@
+(in-package :bknr.web)
+
+(enable-interpol-syntax)
+
+(define-bknr-tag user-flag-choose-dialog (&key enabled)
+  (dolist (flag (sort (all-user-flags) #'string<))
+    (html
+     ((:div :class "user-flag-choose")
+      (if (find flag enabled)
+	  (html ((:input :type "checkbox" :name "flags" :value flag :checked "checked")))
+	  (html ((:input :type "checkbox" :name "flags" :value flag))))
+      (:princ-safe flag)))))
+
+(define-bknr-tag user-form (&key user-id)
+  (let ((user (when user-id
+		(store-object-with-id (if (numberp user-id)
+					  user-id
+					  (parse-integer user-id))))))
+    (if user
+	(html ((:form :method "post")
+	       (:table
+		(:tr (:td "login")
+		     (:td (:princ-safe (user-login user))))
+		(when (< 0 (user-last-login user))
+		  (html
+		   (:tr (:td "last login")
+			(:td (:princ-safe (format-date-time (user-last-login user)))))))
+		(:tr (:td "full name")
+		     (:td (html (text-field "full-name" :value (user-full-name user)))))
+		(:tr (:td "email")
+		     (:td (html (text-field "email" :value (user-email user)))))
+		(when (admin-p *user*)
+		  (html (:tr (:td "flags")
+			     (:td (user-flag-choose-dialog :enabled (user-flags user))))))
+		(:tr (:td "new password") 
+		     (:td ((:input :type "password" :name "password" :size "8"))))
+		(:tr (:td "repeat new password") 
+		     (:td ((:input :type "password" :name "password-repeat" :size "8"))))
+		(:tr ((:td :colspan "2")
+		      (submit-button "save" "save")
+		      (when (admin-p *user*)
+			(submit-button "delete" "delete" :confirm "Really delete this user account?  The operation cannot be undone.")))))))
+	(html ((:form :method "post")
+	       (:table
+		(:tr (:td "login")
+		     (:td ((:input :type "text" :name "login" :size "15"))))
+		(:tr (:td "full name")
+		     (:td ((:input :type "text" :name "full-name" :size "40"))))
+		(:tr (:td "email")
+		     (:td ((:input :type "text" :name "email" :size "40"))))
+		(:tr (:td "flags")
+		     (:td (user-flag-choose-dialog)))
+		(:tr (:td "password") 
+		     (:td ((:input :type "password" :name "password" :size "8"))))
+		(:tr (:td "repeat password") 
+		     (:td ((:input :type "password" :name "password-repeat" :size "8"))))
+		(:tr ((:td :colspan "2")
+		      (submit-button "create" "create")))))))))

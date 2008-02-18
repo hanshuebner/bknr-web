@@ -1,0 +1,12 @@
+<!ELEMENT item ( #PCDATA ) >
+<!ATTLIST item url            NMTOKEN #REQUIRED >
+<!ATTLIST item title          NMTOKEN #IMPLIED >
+<!ATTLIST item active-image   NMTOKEN #IMPLIED >
+<!ATTLIST item inactive-image NMTOKEN #IMPLIED >
+<!ATTLIST item hover-image    NMTOKEN #IMPLIED >
+
+<!ELEMENT menu ( item+ ) >
+<!ATTLIST menu name NMTOKEN #REQUIRED >
+
+<!ELEMENT menus ( menu+ ) >
+

@@ -1,0 +1,56 @@
+;; turn on font-lock mode
+(global-font-lock-mode)
+
+(defvar thirdparty-home)
+(setq thirdparty-home "~/thirdparty/")
+
+(show-paren-mode 1)
+
+(add-to-list 'Info-default-directory-list
+	     (concat thirdparty-home "emacs/info"))
+(add-to-list 'load-path (concat thirdparty-home "emacs"))
+(require 'vc-svn)
+(require 'htmlize)
+(add-to-list 'load-path (concat thirdparty-home "emacs/slime"))
+(require 'slime)
+(add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
+(add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
+;(setq inferior-lisp-program (concat "lisp -init " (getenv "HOME") "/eboy/src/init.lisp"))
+(setq inferior-lisp-program (concat "lisp -init " (getenv "HOME") "/eboy/src/init.lisp"))
+
+(setq indent-tabs-mode nil)
+(show-paren-mode 1)
+
+(setq auto-mode-alist
+      (append '(
+                ("\\.emacs$" . emacs-lisp-mode)
+                ("\\.asd$" . lisp-mode)
+                ("\\.lisp$" . lisp-mode)
+                ("\\.lsp$" . lisp-mode)
+                ("\\.cl$" . lisp-mode)
+                ("\\.system$" . lisp-mode)
+                ("\\.scm$" . scheme-mode)
+                ("\\.ss$" . scheme-mode)
+                ("\\.sch$" . scheme-mode)
+                ) auto-mode-alist))
+(setq lisp-indent-function 'common-lisp-indent-function)
+(define-key lisp-mode-map [(control m)] 'newline-and-indent)
+(define-key global-map [(control m)] 'newline-and-indent)
+(global-set-key [(meta g)] 'goto-line)
+(global-set-key (quote [f12]) (quote next-error))
+(define-key lisp-mode-map [(control c) (h)]
+  '(lambda ()
+    (interactive)
+    (ignore-errors
+      (info (concatenate 'string "(gcl) " (thing-at-point 'symbol))))))
+
+
+(put 'narrow-to-region 'disabled nil)
+(custom-set-variables
+  ;; custom-set-variables was added by Custom -- don't edit or cut/paste it!
+  ;; Your init file should contain only one such instance.
+ '(file-coding-system-alist (quote (("\\.elc\\'" emacs-mule . emacs-mule) ("\\(\\`\\|/\\)loaddefs.el\\'" raw-text . raw-text-unix) ("\\.tar\\'" no-conversion . no-conversion) ("\\.bknr\\'" utf-8 . utf-8) ("" undecided)))))
+(custom-set-faces
+  ;; custom-set-faces was added by Custom -- don't edit or cut/paste it!
+  ;; Your init file should contain only one such instance.
+ )

@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+ <head>
+  <title>Server unavailable</title>
+  <style type="text/css">
+<!--
+body {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	background-color: #ffffff;
+}
+body h1 {
+	width: 100%;
+	background-color: #e0e0e0;
+	padding-top: 20px;
+	padding-bottom: 20px;
+	text-align: center;
+	font-size: 150%;
+}
+-->
+  </style>
+ </head>
+ <body>
+  <h1>Server unavailable</h1>
+  <p>The server is currently unavailable.  Please try again in a few minutes.</p>
+ <body>
+</html>
