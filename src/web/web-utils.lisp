@@ -101,26 +101,28 @@ macro after the request body has been executed."
   (unless (aux-request-value 'bknr-parsed-parameters)
     (let ((request-charset (or (register-groups-bind (charset) (#?r".*charset=\"?([^\"; ]+).*" (header-in :content-type)) charset)
 			       "utf-8")))
-      (declare (ignore request-charset))
-      (format t "post parameters not read~%")
-      #+(or)
+      ;; request-charset is not currently used because there seems to
+      ;; be no way to pass the character set for paramter decoding
+      ;; down to Hunchentoot.  This will eventually be required (or
+      ;; will it?)
       (setf (aux-request-value 'bknr-parsed-parameters)
-	    (mapcar (lambda (param)
-		      (cons (car param)
-			    (iconv:iconv request-charset "utf-8" (cdr param))))
-		    (remove "" (append (form-urlencoded-to-query (uri-query (script-name)))
-				       (aux-request-value 'bknr-parsed-body-parameters))
-			    :key #'cdr :test #'string-equal)))))
+	    (remove "" (query-params)
+                    :key #'cdr :test #'string-equal))))
   (aux-request-value 'bknr-parsed-parameters))
 
-(defun query-param (param-name)
-  (let ((value (cdr (assoc param-name (all-request-params) :test #'string-equal))))
-    (when (equal "" value)
-      (setf value nil))
-    value))
+(defun query-params (&key (get t) (post t))
+  (append (when get (get-parameters))
+          (when post (post-parameters))))
 
-(defun query-param-list (param-name)
-  (assoc-values param-name (get-parameters) :test #'string-equal))
+(defun query-param (param-name &key (get t) (post t))
+  (let ((value (cdr (assoc param-name (query-params :get get :post post) :test #'equal))))
+    (unless (equal value "")
+      value)))
+      
+
+(defun query-param-list (param-name &key (get t) (post t))
+  (assoc-values param-name (query-params :get get :post post)
+                :test #'string-equal))
 
 (defun request-variable (var)
   (gethash var *req-var-hash*))
@@ -164,7 +166,7 @@ macro after the request body has been executed."
 
 (defun parse-date-field (name)
   (let ((timespec (mapcar #'(lambda (var) (parse-integer
-					   (get-parameter (concatenate 'string name "-" var))
+					   (query-param (concatenate 'string name "-" var))
 					   :junk-allowed t))
 			  '("minute" "hour" "day" "month" "year"))))
     (unless (car timespec)

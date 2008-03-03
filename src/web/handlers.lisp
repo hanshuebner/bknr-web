@@ -254,22 +254,17 @@ authorization?"))
          (*random-state* (make-random-state t)))
     (do-log-request)
     (unwind-protect
-	 (if (not (authorized-p handler))
-	     (progn
-	       (setf (session-value :login-redirect-uri)
-		     (redirect-uri (parse-uri (script-name))))
-	       (redirect (website-make-path *website* "login")))
-	     (if *catch-errors-p*
-		 (handler-bind
-                     ((error #'(lambda (e)
-                                 (with-http-response (:content-type "text/html; charset=UTF-8"
-                                                                    :response +http-internal-server-error+)
-                                   (return-from invoke-handler (prog1
-                                                                   (with-http-body ()
-                                                                     (website-show-error-page *website* e))
-                                                                 (do-error-log-request e)))))))
-		   (handle handler))
-                 (handle handler)))
+         (if *catch-errors-p*
+             (handler-bind
+                 ((error #'(lambda (e)
+                             (with-http-response (:content-type "text/html; charset=UTF-8"
+                                                                :response +http-internal-server-error+)
+                               (return-from invoke-handler (prog1
+                                                               (with-http-body ()
+                                                                 (website-show-error-page *website* e))
+                                                             (do-error-log-request e)))))))
+               (handle handler))
+             (handle handler))
       (handler-case
 	  (mapcar #'delete-file (mapcar #'cdr (request-uploaded-files)))
 	(error (e)
@@ -284,11 +279,13 @@ authorization?"))
   "Ensure that the BKNR-SESSION session variable is set and that it
 belongs to the user that is specified in the request."
   (let ((request-user (find-user-from-request-parameters (website-authorizer *website*))))
-    (unless (and (session-value 'bknr-session)
-                 (eq (bknr-session-user) request-user))
+    (when (or (not (session-value 'bknr-session))
+              (and request-user
+                   (not (eq (bknr-session-user) request-user))))
       (setf (session-value 'bknr-session)
             (make-instance 'bknr-session :user (or request-user
-                                                   (find-user "anonymous")))))))
+                                                   (find-user "anonymous"))))))
+  (session-value 'bknr-session))
 
 (defun bknr-dispatch (request)
   (declare (ignore request))
@@ -297,8 +294,13 @@ belongs to the user that is specified in the request."
       (handler
        (start-session)
        (ensure-bknr-session)
-       (when (authorize (website-authorizer *website*))
-         (curry #'invoke-handler handler)))
+       (cond
+         ((authorize (website-authorizer *website*))
+          (curry #'invoke-handler handler))
+         (t
+          (setf (session-value :login-redirect-uri)
+                (redirect-uri (parse-uri (script-name))))
+          (redirect (website-make-path *website* "login")))))
       (t
        'error-404))))
 
@@ -641,5 +643,5 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 		   ,@body))))))
 
 (defun unpublish ()
-  (setf *dispatch-table* (remove 'bknr-handler *dispatch-table*)
+  (setf *dispatch-table* (remove 'bknr-dispatch *dispatch-table*)
 	*handlers* nil))

@@ -187,6 +187,7 @@
 	   #:all-request-params
 	   #:request-uploaded-files
 	   #:request-uploaded-file
+           #:query-params
 	   #:query-param
 	   #:query-param-list
 	   #:cookie-value
@@ -286,6 +287,7 @@
 	   #:page-handler-prefix
 	   #:page-handler-site
 	   #:page-handler-url
+           #:authorize
 	   #:authorized-p
 	   #:admin-only-handler
 	   #:prefix-handler

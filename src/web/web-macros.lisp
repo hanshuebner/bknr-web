@@ -24,10 +24,10 @@
   (let ((vars (loop for param in params
 		    when (and (symbolp param)
 			      (not (null param)))
-		    collect (list param `(get-parameter ,(string-downcase (symbol-name param))))
+		    collect (list param `(query-param ,(string-downcase (symbol-name param))))
 		    when (consp param)
 		    collect (list (car param)
-				  `(or (get-parameter ,(string-downcase (symbol-name (car param))))
+				  `(or (parameter ,(string-downcase (symbol-name (car param))))
 				    ,(second param))))))
     (if vars
 	`(let ,vars
@@ -39,7 +39,7 @@
     ,@(mapcar #'(lambda (c)
 		  (if (eql (car c) t)
 		      `(t ,@(cdr c))
-		      `((get-parameter ,(symbol-name (car c)))
+		      `((parameter ,(symbol-name (car c)))
 			(with-query-params (,@(cadr c))
 			  ,@(cddr c)))))
 	      cases)))

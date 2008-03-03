@@ -44,14 +44,8 @@ request or NIL.")
       (error 'login-failure))))
 
 (defmethod authorize ((authorizer bknr-authorizer))
-  ;; Catch any errors that occur during request body processing
-  (handler-case
-      (when (session-value 'bknr-session)
-	(return-from authorize t))
-    (error (e)
-      (format t "; Caught error ~A during request processing~%" e)
-      (setf (return-code) +http-bad-request+)
-      (princ-to-string e)))
+  (when (session-value 'bknr-session)
+    (return-from authorize t))
 
   ;; unauthorized, come up with 401 response to the web browser
   (redirect "/login")
