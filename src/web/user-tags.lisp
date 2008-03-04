@@ -29,7 +29,7 @@
 		     (:td (html (text-field "full-name" :value (user-full-name user)))))
 		(:tr (:td "email")
 		     (:td (html (text-field "email" :value (user-email user)))))
-		(when (admin-p *user*)
+		(when (admin-p (bknr-session-user))
 		  (html (:tr (:td "flags")
 			     (:td (user-flag-choose-dialog :enabled (user-flags user))))))
 		(:tr (:td "new password") 
@@ -38,7 +38,7 @@
 		     (:td ((:input :type "password" :name "password-repeat" :size "8"))))
 		(:tr ((:td :colspan "2")
 		      (submit-button "save" "save")
-		      (when (admin-p *user*)
+		      (when (admin-p (bknr-session-user))
 			(submit-button "delete" "delete" :confirm "Really delete this user account?  The operation cannot be undone.")))))))
 	(html ((:form :method "post")
 	       (:table

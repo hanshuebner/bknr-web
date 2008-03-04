@@ -57,8 +57,8 @@
   (all-store-images))
 
 (defun make-keyword-results (images)
-  (loop for i on images by #'(lambda (seq) (subseq seq 30))
-        collect (subseq i 0 30)))
+  (loop for i on images by (curry #'nthcdr 30)
+        collect (subseq* i 0 30)))
 
 (defmethod handle-object ((handler image-page-handler) images)
   (let ((results (make-keyword-results (object-list-handler-get-objects handler images))))

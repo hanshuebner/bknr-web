@@ -278,13 +278,14 @@ authorization?"))
 (defun ensure-bknr-session ()
   "Ensure that the BKNR-SESSION session variable is set and that it
 belongs to the user that is specified in the request."
-  (let ((request-user (find-user-from-request-parameters (website-authorizer *website*))))
+  (let ((request-user (authorize (website-authorizer *website*))))
     (when (or (not (session-value 'bknr-session))
               (and request-user
                    (not (eq (bknr-session-user) request-user))))
       (setf (session-value 'bknr-session)
             (make-instance 'bknr-session :user (or request-user
-                                                   (find-user "anonymous"))))))
+                                                   (find-user "anonymous")
+                                                   (error "cannot find \"anonymous\" user"))))))
   (session-value 'bknr-session))
 
 (defun bknr-dispatch (request)
@@ -295,7 +296,7 @@ belongs to the user that is specified in the request."
        (start-session)
        (ensure-bknr-session)
        (cond
-         ((authorize (website-authorizer *website*))
+         ((authorized-p handler)
           (curry #'invoke-handler handler))
          (t
           (setf (session-value :login-redirect-uri)

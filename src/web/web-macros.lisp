@@ -8,7 +8,6 @@
 (defvar *website-modules* (make-hash-table :test #'equal))
 
 (defvar *session* nil "Current session")
-(defvar *user* nil "Current user")
 (defvar *req-var-hash* nil "Request variables")
 
 (defmacro with-bknr-page ((&rest args) &body body)
@@ -89,3 +88,19 @@ currently generated XHTML output as a comment."
 (defmacro cmslink (url &body body)
   `(html ((:a :class "cmslink" :href (website-make-path *website* ,url))
 	  ,@body)))
+
+(defvar *xml-sink*)
+
+(defmacro with-xml-response ((&key (content-type "text/xml") root-element) &body body)
+  `(with-http-response (:content-type ,content-type)
+     (with-query-params (download)
+       (when download
+	 (setf (hunchentoot:header-out :content-disposition)
+               (format nil "attachment; filename=~A" download))))
+    (with-output-to-string (s)
+      (let ((*xml-sink* (make-character-stream-sink s :canonical nil)))
+        (with-xml-output *xml-sink*
+          ,(if root-element
+               `(with-element ,root-element
+                 ,@body)
+               `(progn ,@body)))))))

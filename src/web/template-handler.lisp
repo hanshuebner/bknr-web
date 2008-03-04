@@ -140,10 +140,11 @@
       (let* ((name (node-name node))
              (ns (node-ns node))
              (children (node-children node))
-             (attrs (cxml-xmls:node-attrs node)))
+             (attrs (cxml-xmls:node-attrs node))
+             (ns-handler-package (and ns (find ns (template-expander-command-packages expander)
+                                               :test #'equal :key #'car))))
         (cond
-          ((find ns (template-expander-command-packages expander)
-		 :test #'equal :key #'car)
+          (ns-handler-package
 	   (let ((*tag-children* children))
 	     (apply (find-tag-function expander name ns)
 		    (append (loop for (key name) in attrs

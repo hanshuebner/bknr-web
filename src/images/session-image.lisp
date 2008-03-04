@@ -34,6 +34,4 @@
 	    finally (with-image (result-image (- x-max x-min) (- y-max y-min))
 		      (setf (transparent-color result-image) (allocate-color 255 255 255 :image result-image))
 		      (copy-image *default-image* result-image x-min y-min 0 0 (image-width result-image) (image-height result-image))
-		      (with-http-response (:content-type "image/png")
-			(with-http-body ()
-			  (write-image-to-stream *html-stream* :png :image result-image))))))))
+		      (emit-image-to-browser result-image :png))))))

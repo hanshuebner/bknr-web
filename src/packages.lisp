@@ -164,6 +164,7 @@
   (:export #:*user*
 	   #:with-http-request
 	   #:with-http-body
+           #:with-xml-response
 	   #:request-variable
 	   #:with-query-params
 	   #:define-bknr-tag
@@ -276,7 +277,7 @@
 	   #:require-user-flag
 
 	   #:bknr-authorizer
-	   #:find-user-from-request-parameters
+	   #:authorize
 
 	   #:handle
 	   #:object-handler

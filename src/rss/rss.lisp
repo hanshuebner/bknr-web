@@ -17,9 +17,9 @@
   ((name :update
 	 :index-type string-unique-index
 	 :index-reader find-rss-channel)
-   (title :update)
-   (link :update)
-   (description :update)
+   (title :update :initform nil)
+   (link :update :initform nil)
+   (description :update :initform nil)
    (last-update :update :initform (get-universal-time))
    (max-item-age :update :initform (* 4 7 3600))
    (items :update :initform nil))
@@ -52,6 +52,12 @@ The channel object has more required elements than specified by the
 standard in order to make the generated feed documents more widely
 accepted."))
 
+(defmethod print-object ((channel rss-channel) stream)
+  (print-unreadable-object (channel stream :type t :identity t)
+    (format stream "~A (~A item~:P)"
+            (rss-channel-name channel)
+            (length (rss-channel-items channel)))))
+
 (defmethod prepare-for-snapshot ((channel rss-channel))
   "When snapshotting, remove items from CHANNEL that are destroyed."
   (setf (rss-channel-items channel) (remove-if #'object-destroyed-p (rss-channel-items channel))))
@@ -71,10 +77,8 @@ Returns the persistent RSS-CHANNEL object that has been created."
   
 (defun render-mandatory-element (channel element)
   (with-element (string-downcase (symbol-name element))
-    (text (aif (and (slot-boundp channel element)
-		    (slot-value channel element))
-	       it
-	       (format nil "(channel ~(~A~) not defined)" element)))))
+    (let ((value (funcall (find-symbol (format nil "RSS-CHANNEL-~A" element) :bknr.rss) channel)))
+      (text (or value (format nil "(channel ~(~A~) not defined)" element))))))
 
 (defgeneric rss-channel-xml (channel stream)
   (:documentation "Generate XML for the current state of RSS channel
@@ -85,8 +89,9 @@ CHANNEL to STREAM.")
         (attribute "version" "2.0")
         (attribute* "xmlns" "content" "http://purl.org/rss/1.0/modules/content/")
         (with-element "channel"
-          (dolist (slot '(title link description))
-            (render-mandatory-element channel slot))
+          (render-mandatory-element channel 'title)
+          (render-mandatory-element channel 'link)
+          (render-mandatory-element channel 'description)
 	
           (dolist (item (remove-if-not #'(lambda (item)
                                            (and (not (object-destroyed-p item))

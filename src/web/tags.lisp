@@ -112,7 +112,8 @@
 		      do (html (:princ-safe line) :newline))))))
 
 (defun user-template-prefix ()
-  (user-preference *user* :template-path-prefix "file:///Volumes/web/template/"))
+  (error 'wtf)
+  (user-preference (bknr-session-user) :template-path-prefix "file:///Volumes/web/template/"))
 
 ;; xxx new templater
 #+(or)

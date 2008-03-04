@@ -71,8 +71,8 @@
   (html ((:div :class "images")
 	 (when title
 	   (html (:h2 (:princ-safe title))))
-	 (:table (loop for image-row on images by #'(lambda (seq) (subseq seq 5))
-		       do (html (:tr (loop for image in (subseq image-row 0 5)
+	 (:table (loop for image-row on images by (curry #'nthcdr 5)
+		       do (html (:tr (loop for image in (subseq* image-row 0 5)
 					   for image-id = (store-object-id image)
 					   for image-name = (store-image-name image)
 					   do (html ((:td :width "110")
@@ -129,8 +129,8 @@
 		    :value "Unselect all images"
 		    :onClick "check(this,'image-id',false);"))
 	   ((:table :class "images")
-	    (loop for image-row on images by #'(lambda (seq) (subseq seq 5))
-		  do (html (:tr (loop for image in (subseq image-row 0 5)
+	    (loop for image-row on images by (curry #'nthcdr 5)
+		  do (html (:tr (loop for image in (subseq* image-row 0 5)
 				      for image-id = (store-object-id image)
 				      for image-name = (store-image-name image)
 				      do (html ((:td)

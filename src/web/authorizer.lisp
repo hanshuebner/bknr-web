@@ -18,7 +18,7 @@
     (find-host :create t :ipaddr remote-host)))
 
 (defun session-from-request ()
-  "check whether the request has a valid session id in either the bknr-sessionid cookie or query parameter"
+  "Check whether the request has a valid session id in either the bknr-sessionid cookie or query parameter"
   (session-value 'bknr-session))
 
 (define-condition login-failure (serious-condition)
@@ -27,26 +27,17 @@
              (declare (ignore c))
              (format s "Login failed"))))
 
-(defgeneric find-user-from-request-parameters (authorizer)
-  (:documentation "Return the user that is associated with the current
-request or NIL.")
+(defgeneric authorize (authorizer)
+  (:documentation "Return the user that is associated with the current request or NIL.")
   (:method ((authorizer bknr-authorizer))
     (with-query-params (__username __password)
       (unless (and __username __password
                    (not (equal __username ""))
                    (not (equal __password "")))
-        (return-from find-user-from-request-parameters nil))
+        (return-from authorize nil))
       (let ((user (find-user __username)))
 	(when (and user
                    (not (user-disabled user))
 		   (verify-password user __password))
-          (return-from find-user-from-request-parameters user)))
+          (return-from authorize user)))
       (error 'login-failure))))
-
-(defmethod authorize ((authorizer bknr-authorizer))
-  (when (session-value 'bknr-session)
-    (return-from authorize t))
-
-  ;; unauthorized, come up with 401 response to the web browser
-  (redirect "/login")
-  :deny)
