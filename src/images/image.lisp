@@ -104,31 +104,35 @@
     (keyword (store-image-with-name (string-downcase (symbol-name image-id))))))
 
 ;;; import
-(defun import-image (pathname &key name user keywords directory (keywords-from-dir t) (class-name 'store-image) initargs)
-  "Create blob from given file"
-  (unless name
-    (setq name (pathname-name pathname)))
-  (unless (scan #?r"\D" name)
-    (error "invalid image name ~A, needs to contain at least one non-digit character" name))
-  (when (store-image-with-name name)
-    (error "can't import image with name ~A, an image with this name already exists in the datastore" name))
-  (with-image-from-file (image pathname)
-    ;; xxx not tx safe.  hm.
-    (let ((store-image (apply #'make-object 
-			      (append (list class-name
-					    :owners (list user)
-					    :timestamp (get-universal-time)
-					    :name name
-					    :type (pathname-type-symbol pathname)
-					    :width (image-width image)
-					    :height (image-height image)
-					    :directory directory
-					    :keywords (if keywords-from-dir
-							  (append (mapcar #'make-keyword-from-string directory) keywords)
-							  keywords))
-				      initargs))))
-      (blob-from-file store-image pathname)
-      store-image)))
+(defgeneric import-image (pathname &key type name user keywords directory keywords-from-dir class-name initargs)
+  (:documentation "Create blob from given source")
+  (:method (pathname &key type name user keywords directory (keywords-from-dir t) (class-name 'store-image) initargs)
+    (unless name
+      (setq name (pathname-name pathname)))
+    (unless (scan #?r"\D" name)
+      (error "invalid image name ~A, needs to contain at least one non-digit character" name))
+    (when (store-image-with-name name)
+      (error "can't import image with name ~A, an image with this name already exists in the datastore" name))
+    (let ((type (or type (pathname-type pathname))))
+      (unless (keywordp type)
+        (setf type (make-keyword-from-string type)))
+      (with-image-from-file (image pathname type)
+        ;; xxx not tx safe.
+        (let ((store-image (apply #'make-object 
+                                  (append (list class-name
+                                                :owners (list user)
+                                                :timestamp (get-universal-time)
+                                                :name name
+                                                :type (make-keyword-from-string type)
+                                                :width (image-width image)
+                                                :height (image-height image)
+                                                :directory directory
+                                                :keywords (if keywords-from-dir
+                                                              (append (mapcar #'make-keyword-from-string directory) keywords)
+                                                              keywords))
+                                          initargs))))
+          (blob-from-file store-image pathname)
+          store-image)))))
 
 (defun directory-recursive (pathname &key list-directories)
   (loop for file in (directory pathname)

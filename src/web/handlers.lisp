@@ -264,11 +264,7 @@ authorization?"))
                                                                  (website-show-error-page *website* e))
                                                              (do-error-log-request e)))))))
                (handle handler))
-             (handle handler))
-      (handler-case
-	  (mapcar #'delete-file (mapcar #'cdr (request-uploaded-files)))
-	(error (e)
-	  (warn "error ~A ignored while deleting uploaded files" e))))))
+             (handle handler)))))
 
 (defmethod handle ((page-handler page-handler))
   (funcall (page-handler-function page-handler)))

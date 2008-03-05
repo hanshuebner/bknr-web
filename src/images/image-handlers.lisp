@@ -79,14 +79,14 @@
 (defmethod handle-form ((handler upload-image-handler)
 			(action (eql :upload)))
   (with-bknr-page (:title "Image upload result")
-    (let ((file-pathname (cdr (find "file" (request-uploaded-files) :key #'car :test #'equal))))
-      (unless file-pathname
+    (let ((upload (request-uploaded-file "file")))
+      (unless upload
 	(error "no file uploaded"))
       (with-query-params (name keyword)
-	(let* ((image (import-image file-pathname
-				    :user (bknr-session-user)
-				    :keywords (list keyword)
-				    :keywords-from-dir nil))
+	(let* ((image (bknr.images:import-image upload
+                                                :user (bknr-session-user)
+                                                :keywords (when keyword (list keyword))
+                                                :keywords-from-dir nil))
 	       (image-id (store-object-id image)))
 	  (if image
 	      (html "Image successfully imported"

@@ -226,8 +226,12 @@
 	   #:upload
 	   #:upload-name
 	   #:upload-pathname
+           #:upload-original-filename
 	   #:upload-size
 	   #:upload-content-type
+
+           #:with-image-from-upload
+           #:with-image-from-upload*
 
 	   #:bknr-url-path
 
