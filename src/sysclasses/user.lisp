@@ -130,7 +130,7 @@ password against an encrypted one."
       default))
 
 (deftransaction set-user-last-login (user time)
-  (setf (slot-value user 'last-login) (get-universal-time)))
+  (setf (slot-value user 'last-login) time))
 
 (deftransaction set-user-preference (user key value)
   (setf (gethash key (user-preferences user)) value))
@@ -180,11 +180,11 @@ password against an encrypted one."
 (deftransaction set-user-crypted-password (user crypted-password)
   (setf (user-password user) crypted-password))
 
-(defmethod set-user-password ((user user) password)
-  (set-user-crypted-password user (crypt-md5 password (make-salt))))
-
-(defmethod set-user-password ((user string) password)
-  (set-user-crypted-password (find-user user) (crypt-md5 password (make-salt))))
+(defgeneric set-user-password (user password)
+  (:method ((user user) password)
+    (set-user-crypted-password user (crypt-md5 password (make-salt))))
+  (:method ((username string) password)
+    (set-user-password (find-user username) password)))
 
 ;;; owned objects
 

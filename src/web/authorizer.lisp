@@ -21,12 +21,6 @@
   "Check whether the request has a valid session id in either the bknr-sessionid cookie or query parameter"
   (session-value 'bknr-session))
 
-(define-condition login-failure (serious-condition)
-  ()
-  (:report (lambda (c s)
-             (declare (ignore c))
-             (format s "Login failed"))))
-
 (defgeneric authorize (authorizer)
   (:documentation "Return the user that is associated with the current request or NIL.")
   (:method ((authorizer bknr-authorizer))
@@ -39,5 +33,6 @@
 	(when (and user
                    (not (user-disabled user))
 		   (verify-password user __password))
+          (set-user-last-login user (get-universal-time))
           (return-from authorize user)))
-      (error 'login-failure))))
+      nil)))

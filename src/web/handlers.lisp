@@ -607,7 +607,8 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
       (logo)
       (:h1 (:princ-safe (website-name website)))
       (navigation))
-     (:h1 (:princ-safe title))
+     (when title
+       (html (:h1 (:princ-safe title))))
      (funcall fn)
      (session-info)))))
 

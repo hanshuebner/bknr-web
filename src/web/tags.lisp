@@ -167,7 +167,7 @@ outputs:
       (html (:princ-safe #?"background-color: #$(background-color);")))
     "}")))
 
-(define-bknr-tag header (&key (title "untitled"))
+(define-bknr-tag header (&key title)
   "Outputs the dynasite header containing the title for the page and a reference to the static css files
 
 Arguments: title (optional, default is \"untitled\")
@@ -197,7 +197,8 @@ outputs:
 	      :href (website-rss-feed-url *website*)))))
    ((:link :rel "shortcut icon" :href "/favicon.ico" :type "image/png"))
    ((:meta :http-equiv "content-type" :content "text/html;charset=utf-8"))
-   (:title (:princ-safe title))))
+   (when title
+     (html (:title (:princ-safe title))))))
 
 (define-bknr-tag navi-button (&key url text)
   (html (:princ "&nbsp;"))
