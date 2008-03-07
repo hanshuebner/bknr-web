@@ -35,7 +35,8 @@
   (find parameter-name (request-uploaded-files) :test #'equal :key #'upload-name))
 
 (defmacro with-image-from-upload ((image upload &rest args) &body body)
-  `(with-image-from-file (,image (upload-pathname ,upload) (pathname-type (upload-original-filename ,upload)) ,@args)
+  `(with-image-from-file (,image (upload-pathname ,upload)
+                          (make-keyword-from-string (pathname-type (upload-original-filename ,upload))) ,@args)
     ,@body))
 
 (defmacro with-image-from-upload* ((upload &rest args) &body body)
