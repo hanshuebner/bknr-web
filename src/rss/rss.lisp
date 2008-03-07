@@ -21,7 +21,7 @@
    (link :update :initform nil)
    (description :update :initform nil)
    (last-update :update :initform (get-universal-time))
-   (max-item-age :update :initform (* 4 7 3600))
+   (max-item-age :update :initform (* 4 7 24 60 60))
    (items :update :initform nil))
   (:documentation "RSS-CHANNEL models one rss channel.  Items are
 added to a channel by deriving other persistent classes from the mixin
@@ -60,7 +60,7 @@ accepted."))
 
 (defmethod prepare-for-snapshot ((channel rss-channel))
   "When snapshotting, remove items from CHANNEL that are destroyed."
-  (setf (rss-channel-items channel) (remove-if #'object-destroyed-p (rss-channel-items channel))))
+  (setf (slot-value channel 'items) (remove-if #'object-destroyed-p (rss-channel-items channel))))
 
 ;; Mixin for items
 
