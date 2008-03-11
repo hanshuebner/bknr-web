@@ -44,7 +44,12 @@
    (destination :initarg :destination
 		:reader template-expander-destination)
    (cached-templates :initform (make-hash-table :test 'equal)
-                     :accessor template-expander-cached-templates)))
+                     :accessor template-expander-cached-templates)
+   (default-template :initarg :default-template :initform nil
+                     :reader template-expander-default-template
+                     :documentation
+                     "Name of the default template to use when no path
+name has been specified.")))
 
 (defmethod find-tag-function ((expander template-expander) name ns)
   (let ((package-name (cdr (find ns (template-expander-command-packages expander)
@@ -184,8 +189,14 @@
 	  (when (probe-file file)
 	    (values file (cdr components)))))))
 
+(defun split-path (path)
+  "Split path into its components and return them as list.  Empty components are removed."
+  (remove "" (split "/" path) :test #'equal))
+
 (defmethod find-template-pathname ((expander template-expander) template-name)
-  (let ((components (remove "" (split "/" template-name) :test #'equal)))
+  (let ((components (or (split-path template-name)
+                        (and (template-expander-default-template expander)
+                             (split-path (template-expander-default-template expander))))))
     (multiple-value-bind (pathname ret-components)
 	(find-template (template-expander-destination expander) components)
       (unless pathname

@@ -17,8 +17,6 @@
 	 :reader website-name)
    (url :initarg :url
 	:accessor website-url)
-   (vhosts :initarg :vhosts
-	   :accessor website-vhosts)
    (authorizer :initarg :authorizer
 	       :accessor website-authorizer)
    (handler-definitions :initarg :handler-definitions
@@ -54,7 +52,6 @@
    (template-handler :initform nil
                      :reader website-template-handler))
   (:default-initargs :url nil
-    :vhosts :wild
     :authorizer (make-instance 'bknr-authorizer)
     :menu nil
     :navigation nil
@@ -69,14 +66,20 @@
     :rss-feed-url nil)
   (:documentation "Class to hold all information on a web server that
 is served within BKNR.  Currently, this is a singleton object, and
-*WEBSITE* will point to the only instance.  Eventually, multiple
-WEBSITE instances for virtual hosts may be supported."))
+*WEBSITE* will point to the only instance."))
 
 (defmethod initialize-instance :after ((website website) &key &allow-other-keys)
   (when *website*
     (warn "Warning, *website* redefined with new website definition"))
   (setf *website* website)
   (publish-site *website*))
+
+(defun website-host ()
+  (if (and (boundp 'hunchentoot::*request*)
+           hunchentoot::*request*
+           (hunchentoot:header-in :host))
+      (header-in :host)
+      "localhost"))
 
 (defmethod show-handlers ((website website))
   (dolist (handler (website-handlers website))

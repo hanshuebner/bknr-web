@@ -255,7 +255,7 @@
 	   #:*website*
 	   #:website
 	   #:website-name
-	   #:website-hosts
+           #:website-host
 	   #:website-authorizer
 	   #:website-show-page
 	   #:website-show-error-page

@@ -18,7 +18,7 @@
 	 :index-type string-unique-index
 	 :index-reader find-rss-channel)
    (title :update :initform nil)
-   (link :update :initform nil)
+   (path :update :initform nil)
    (description :update :initform nil)
    (last-update :update :initform (get-universal-time))
    (max-item-age :update :initform (* 4 7 24 60 60))
@@ -80,6 +80,9 @@ Returns the persistent RSS-CHANNEL object that has been created."
     (let ((value (funcall (find-symbol (format nil "RSS-CHANNEL-~A" element) :bknr.rss) channel)))
       (text (or value (format nil "(channel ~(~A~) not defined)" element))))))
 
+(defmethod rss-channel-link ((channel rss-channel))
+  (format nil "http://~A/~A" (bknr.web:website-host) (rss-channel-path channel)))
+
 (defgeneric rss-channel-xml (channel stream)
   (:documentation "Generate XML for the current state of RSS channel
 CHANNEL to STREAM.")
@@ -88,10 +91,16 @@ CHANNEL to STREAM.")
       (with-element "rss"
         (attribute "version" "2.0")
         (attribute* "xmlns" "content" "http://purl.org/rss/1.0/modules/content/")
+        (attribute* "xmlns" "atom" "http://www.w3.org/2005/Atom")
         (with-element "channel"
           (render-mandatory-element channel 'title)
-          (render-mandatory-element channel 'link)
           (render-mandatory-element channel 'description)
+          (with-element "link"
+            (text (rss-channel-link channel)))
+          (with-element* ("atom" "link")
+            (attribute "href" (rss-channel-link channel))
+            (attribute "rel" "self")
+            (attribute "type" "application/rss+xml"))
 	
           (dolist (item (remove-if-not #'(lambda (item)
                                            (and (not (object-destroyed-p item))
