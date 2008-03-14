@@ -97,10 +97,10 @@ currently generated XHTML output as a comment."
        (when download
 	 (setf (hunchentoot:header-out :content-disposition)
                (format nil "attachment; filename=~A" download))))
-    (with-output-to-string (s)
-      (let ((*xml-sink* (make-character-stream-sink s :canonical nil)))
-        (with-xml-output *xml-sink*
-          ,(if root-element
-               `(with-element ,root-element
-                 ,@body)
-               `(progn ,@body)))))))
+     (with-output-to-string (s)
+       (let ((*xml-sink* (cxml:make-character-stream-sink s :canonical nil)))
+         (cxml:with-xml-output *xml-sink*
+           ,(if root-element
+                `(cxml:with-element ,root-element
+                   ,@body)
+                `(progn ,@body)))))))
