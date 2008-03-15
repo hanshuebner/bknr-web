@@ -6,17 +6,11 @@
 
 (defvar *template-expander*)
 (defvar *template-env*)
-(defparameter *template-dtd-catalog* `(;; libxml standard
-				       "/etc/xml/catalog"
-				       ;; FreeBSD
-				       "/usr/local/share/xml/catalog.ports"
-				       "/usr/local/share/xml/catalog"))
+(defparameter *template-dtd-catalog*
+  (list (namestring (merge-pathnames #P"../../../../thirdparty/xhtml/catalog.xml" *load-pathname*))))
 
 (eval-when (:load-toplevel :execute)
-  (let ((env-catalog (#+sbcl sb-ext:posix-getenv #+openmcl ccl:getenv "XMLCATALOG")))
-    (when env-catalog
-      (pushnew env-catalog *template-dtd-catalog* :test #'equal)))
-  (setf cxml:*catalog* (cxml:make-catalog (remove-if-not #'probe-file *template-dtd-catalog*))
+  (setf cxml:*catalog* (cxml:make-catalog *template-dtd-catalog*)
 	cxml:*dtd-cache* (cxml:make-dtd-cache)
 	cxml:*cache-all-dtds* t))
 
