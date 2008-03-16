@@ -69,11 +69,11 @@ accepted."))
   (:documentation "Mixin class for RSS items.  See documentation for
 class RSS-CHANNEL for an overview."))
 
-(defun make-rss-channel (name title description link &rest args)
+(defun make-rss-channel (name title description path &rest args)
   "Create an RSS channel with the given NAME, TITLE, DESCRIPTION and
 LINK (all strings) which are the mandatory fields in an RSS channel.
 Returns the persistent RSS-CHANNEL object that has been created."
-  (apply #'make-object 'rss-channel :name name :title title :description description :link link args))
+  (apply #'make-object 'rss-channel :name name :title title :description description :path path args))
   
 (defun render-mandatory-element (channel element)
   (with-element (string-downcase (symbol-name element))
