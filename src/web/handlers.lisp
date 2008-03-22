@@ -314,6 +314,11 @@ belongs to the user that is specified in the request."
 (defclass redirect-handler (page-handler)
   ((to :initarg :to :reader redirect-handler-to :documentation "url to redirect to")))
 
+(defmethod initialize-instance :after ((handler redirect-handler) &key to)
+  (assert (equal #\/ (aref to 0))
+          () "path ~S provided as target to redirect-handler does not begin with a slash"
+          to))
+
 (defmethod handle ((page-handler redirect-handler))
   (redirect (redirect-handler-to page-handler)))
 
