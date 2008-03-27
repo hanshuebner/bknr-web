@@ -17,3 +17,8 @@
 
     :components ((:file "package")
 		 (:file "html-match" :depends-on ("package"))))
+
+
+(defsystem :html-match.test
+  :depends-on (:unit-test :html-match)
+  :components ((:file "html-match-test")))
