@@ -136,6 +136,7 @@
 	   #:owned-object
 	   #:owned-object-owners
 	   #:store-objects-owned-by
+           #:store-object-owners
 
 	   #:message-event))
 

@@ -191,7 +191,7 @@ password against an encrypted one."
 (define-persistent-class owned-object (store-object)
   ((owners :update :initform nil
 	   :index-type hash-list-index
-	   :index-reader store-object-owned-by)))
+	   :index-reader store-object-owners)))
 
 (deftransaction owned-object-remove-owner (object owner)
   (setf (owned-object-owners object)
@@ -207,7 +207,6 @@ password against an encrypted one."
 
 (defmethod user-owns-object-p ((user user) (object owned-object))
   (member user (owned-object-owners object)))
-
 
 (define-persistent-class message-event (event)
   ((from :read :initform nil)
