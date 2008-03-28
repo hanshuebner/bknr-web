@@ -21,4 +21,4 @@
 
 (defsystem :html-match.test
   :depends-on (:unit-test :html-match)
-  :components ((:file "html-match-test")))
+  :components ((:file "html-match-tests")))

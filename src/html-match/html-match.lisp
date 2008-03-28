@@ -3,7 +3,7 @@
 (defconstant fail nil
   "Indicates pat-match failure")
 
-(defconstant no-bindings '((t . t))
+(defvar no-bindings '((t . t))          ; actually a constant
   "Indicates pat-match success, with no variables")
 
 (defun regex-pattern-p (pattern)

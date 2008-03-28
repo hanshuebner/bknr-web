@@ -1,6 +1,7 @@
 (in-package :html-match)
 
-(use-package :unit-test)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (use-package :unit-test))
 
 (defmacro test-node-match (pat node)
   `(equal (html-node-match ',pat ',node no-bindings) no-bindings))
