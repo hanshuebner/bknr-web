@@ -83,7 +83,7 @@
       (unless upload
 	(error "no file uploaded"))
       (with-query-params (name keyword)
-	(let* ((image (bknr.images:import-image upload
+	(let* ((image (bknr.images:import-image (pathname upload)
                                                 :user (bknr-session-user)
                                                 :keywords (when keyword (list keyword))
                                                 :keywords-from-dir nil))

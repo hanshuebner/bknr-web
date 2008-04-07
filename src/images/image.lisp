@@ -106,7 +106,10 @@
 ;;; import
 (defgeneric import-image (pathname &key type name user keywords directory keywords-from-dir class-name initargs)
   (:documentation "Create blob from given source")
-  (:method (pathname &key type name user keywords directory (keywords-from-dir t) (class-name 'store-image) initargs)
+  (:method ((pathname pathname)
+            &key type name user keywords directory (keywords-from-dir t) (class-name 'store-image) initargs)
+    (unless (probe-file pathname)
+      (error "file ~A does not exist" (namestring pathname)))
     (unless name
       (setq name (pathname-name pathname)))
     (unless (scan #?r"\D" name)
@@ -119,20 +122,35 @@
       (with-image-from-file (image pathname type)
         ;; xxx not tx safe.
         (let ((store-image (apply #'make-object 
-                                  (append (list class-name
-                                                :owners (list user)
-                                                :timestamp (get-universal-time)
-                                                :name name
-                                                :type (make-keyword-from-string type)
-                                                :width (image-width image)
-                                                :height (image-height image)
-                                                :directory directory
-                                                :keywords (if keywords-from-dir
-                                                              (append (mapcar #'make-keyword-from-string directory) keywords)
-                                                              keywords))
-                                          initargs))))
+                                  class-name
+                                  :owners (list user)
+                                  :timestamp (get-universal-time)
+                                  :name name
+                                  :type (make-keyword-from-string type)
+                                  :width (image-width image)
+                                  :height (image-height image)
+                                  :directory directory
+                                  :keywords (if keywords-from-dir
+                                                (append (mapcar #'make-keyword-from-string directory) keywords)
+                                                keywords)
+                                  initargs)))
           (blob-from-file store-image pathname)
-          store-image)))))
+          store-image))))
+  (:method ((uri puri:uri) &rest args &key &allow-other-keys)
+    (with-temporary-file (pathname)
+      (multiple-value-bind
+            (content status-code headers uri http-stream must-close status-text)
+          (drakma:http-request uri :force-binary t)
+        (declare (ignore status-code uri http-stream must-close status-text))
+        (with-open-file (file pathname
+                              :element-type '(unsigned-byte 8)
+                              :direction :output
+                              :if-exists :error)
+          (write-sequence content file))
+        (apply #'import-image
+               pathname
+               :type (bknr.utils:image-type-symbol (cdr (assoc :content-type headers)))
+               args)))))
 
 (defun directory-recursive (pathname &key list-directories)
   (loop for file in (directory pathname)
