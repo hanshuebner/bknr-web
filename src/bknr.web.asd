@@ -24,6 +24,7 @@
 		 :bknr.utils
 		 :bknr.xml
 		 :hunchentoot
+                 :drakma
 		 :xhtmlgen
 		 :puri
 		 :usocket
