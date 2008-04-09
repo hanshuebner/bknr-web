@@ -2,18 +2,6 @@
 
 (enable-interpol-syntax)
 
-(defun redirect (target &key permanently)
-  (let* ((base (format nil "http://~a"
-		       (or (second (ppcre:split "\\s+" (header-in :via)))
-			   (header-in :host))))
-	 (uri (puri:merge-uris (puri:uri target)
-			       (puri:uri base))))
-    (hunchentoot:redirect (puri:uri-path uri)
-			  :host (puri:uri-host uri)
-			  :port (puri:uri-port uri)
-			  :protocol (puri:uri-scheme uri)
-			  :permanently permanently)))
-
 (defstruct upload name pathname original-filename content-type)
 
 (defgeneric object-url (obj))
