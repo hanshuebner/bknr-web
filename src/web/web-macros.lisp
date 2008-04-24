@@ -91,7 +91,8 @@ currently generated XHTML output as a comment."
 
 (defvar *xml-sink*)
 
-(defmacro with-xml-response ((&key (content-type "text/xml") root-element) &body body)
+(defmacro with-xml-response ((&key (content-type "text/xml; charset=utf-8") root-element xsl-stylesheet-name)
+                             &body body)
   `(with-http-response (:content-type ,content-type)
      (with-query-params (download)
        (when download
@@ -100,6 +101,9 @@ currently generated XHTML output as a comment."
      (with-output-to-string (s)
        (let ((*xml-sink* (cxml:make-character-stream-sink s :canonical nil)))
          (cxml:with-xml-output *xml-sink*
+           ,(when xsl-stylesheet-name
+                  `(sax:processing-instruction *xml-sink* "xml-stylesheet"
+                                               ,(format nil "type=\"text/xsl\" href=\"~A\"" xsl-stylesheet-name)))
            ,(if root-element
                 `(cxml:with-element ,root-element
                    ,@body)
