@@ -128,12 +128,15 @@
     double-image))
 
 (define-imageproc-handler color (input-image &rest color-mappings)
+  ;; We can't handle transparency, so we only transform pixels who
+  ;; have 0 for their transparency value
   (with-default-image (input-image)
     (let ((colors (loop for (old new) on color-mappings by #'cddr
                         collect (cons (parse-color old) (parse-color new)))))
       (do-pixels (input-image)
         (let ((new-color (assoc (ldb (byte 24 0) (raw-pixel)) colors)))
-          (when (cdr new-color)
+          (when (and (zerop (ldb (byte 8 24) (raw-pixel)))
+                     (cdr new-color))
             (setf (raw-pixel) (cdr new-color)))))))
   input-image)
 
