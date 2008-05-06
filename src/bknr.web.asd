@@ -45,9 +45,6 @@
 							:depends-on ("hyperspec")))
 			  :depends-on ("packages"))
 
-		 (:module "rss" :components ((:file "rss"))
-			  :depends-on ("packages"))
-
 		 (:module "web" :components ((:file "site")
 					     ;; data
 					     (:file "host")
@@ -83,8 +80,6 @@
 
 					     (:file "template-handler"
 						    :depends-on ("handlers"))
-					     (:file "rss-handlers"
-						    :depends-on ("handlers"))
 
 					     (:file "user-handlers"
 						    :depends-on ("handlers"))
@@ -96,7 +91,11 @@
 								 "template-handler"
 								 "site"
 								 "web-utils")))
-			  :depends-on ("sysclasses" "packages" "rss"))
+			  :depends-on ("sysclasses" "packages"))
+
+		 (:module "rss" :components ((:file "rss")
+                                             (:file "rss-handlers" :depends-on ("rss")))
+			  :depends-on ("web"))
 
 		 (:module "images" :components ((:file "image")
 						
