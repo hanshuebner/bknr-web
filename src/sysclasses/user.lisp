@@ -157,14 +157,15 @@ password against an encrypted one."
       (terpri s))))
 
 (defun make-user (login &key password full-name email flags (class 'user))
-  (let ((user (make-object class
-			   :login login
-			   :full-name full-name
-			   :flags flags
-			   :email (and email (string-downcase email)))))
-    (when password
-      (set-user-password user password))
-    user))
+  (let ((login (string-downcase (string-trim '(#\space) login))))
+    (let ((user (make-object class
+                             :login login
+                             :full-name full-name
+                             :flags flags
+                             :email (and email (string-downcase email)))))
+      (when password
+        (set-user-password user password))
+      user)))
 
 (defmethod cascade-delete-p ((user user) (event event))
   t)
