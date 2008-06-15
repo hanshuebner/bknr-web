@@ -25,8 +25,8 @@
 	 (user (bknr-session-user session))
 	 (host (bknr-session-host session))
 	 (url (script-name*))
-	 (referer (header-in :referer))
-	 (user-agent (header-in :user-agent))
+	 (referer (header-in* :referer))
+	 (user-agent (header-in* :user-agent))
 	 (time (get-universal-time)))
     (prog1
 	(make-event 'web-server-log-event
@@ -47,7 +47,7 @@
 	 (user (bknr-session-user session))
 	 (host (bknr-session-host session))
 	 (url (script-name*))
-	 (referer (header-in :referer))
+	 (referer (header-in* :referer))
 	 (time (get-universal-time)))
     (make-event 'web-server-error-event
 		:time time

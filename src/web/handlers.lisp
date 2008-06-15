@@ -77,8 +77,8 @@ is served within BKNR.  Currently, this is a singleton object, and
 (defun website-host ()
   (if (and (boundp 'hunchentoot::*request*)
            hunchentoot::*request*
-           (hunchentoot:header-in :host))
-      (header-in :host)
+           (hunchentoot:header-in* :host))
+      (header-in* :host)
       "localhost"))
 
 (defmethod show-handlers ((website website))

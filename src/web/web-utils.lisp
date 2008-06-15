@@ -24,7 +24,7 @@
   "Return a list of UPLOAD structures describing the file uploads in the request."
   (unless (aux-request-value 'uploaded-files)
     (setf (aux-request-value 'uploaded-files)
-          (let ((uploads (remove-if-not #'listp (post-parameters) :key #'cdr)) retval)
+          (let ((uploads (remove-if-not #'listp (post-parameters*) :key #'cdr)) retval)
             (dolist (upload-info uploads)
               (destructuring-bind (name pathname original-filename content-type) upload-info
                 (push (make-upload :name name :pathname pathname :original-filename original-filename :content-type content-type) retval)))
@@ -65,8 +65,8 @@ macro after the request body has been executed."
   (aux-request-value 'bknr-parsed-parameters))
 
 (defun query-params (&key (get t) (post t))
-  (append (when get (get-parameters))
-          (when post (post-parameters))))
+  (append (when get (get-parameters*))
+          (when post (post-parameters*))))
 
 (defun query-param (param-name &key (get t) (post t))
   (let ((value (cdr (assoc param-name (query-params :get get :post post) :test #'equal))))

@@ -26,9 +26,9 @@
 
 (defmethod handle ((handler logout-handler))
   (setf (session-value 'bknr-session) nil)
-  (format t "url: ~A referer: ~A~%" (query-param "url") (header-in :referer))
+  (format t "url: ~A referer: ~A~%" (query-param "url") (header-in* :referer))
   (let ((url (or (query-param "url")
-                 (header-in :referer))))
+                 (header-in* :referer))))
     (if url
         (redirect url)
         (progn (with-bknr-page (:title "logged out")
