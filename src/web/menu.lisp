@@ -51,7 +51,7 @@
       (when title
         (html ((:div :class "title") (:princ-safe title))))
       (dolist (item (menu-items menu))
-	(let ((item-is-active (in-subtree (script-name) (item-url item))))
+	(let ((item-is-active (in-subtree (script-name*) (item-url item))))
 	  (with-slots (url title active-image inactive-image) item
             (let ((link-url (format nil "~A~A" (website-base-href *website*) url)))
               (cond

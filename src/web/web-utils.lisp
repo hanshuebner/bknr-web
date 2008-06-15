@@ -110,11 +110,11 @@ macro after the request body has been executed."
 					    (#\> "&gt;")))))
 
 (defun parse-url ()
-  (values-list (cddr (mapcar #'url-decode (split "/" (script-name))))))
+  (values-list (cddr (mapcar #'url-decode (split "/" (script-name*))))))
 
 (defun last-url-component ()
   (register-groups-bind (last)
-      ("/([^\\/]+)$" (script-name))
+      ("/([^\\/]+)$" (script-name*))
     last))
 
 (defun parse-date-field (name)
@@ -133,12 +133,12 @@ macro after the request body has been executed."
 (defun bknr-url-path (handler)
   "Returns the Path of the request under the handler prefix"
   (let ((len (length (page-handler-prefix handler))))
-    (subseq (script-name) len)))
+    (subseq (script-name*) len)))
 
 (defun self-url (&key command prefix)
   (destructuring-bind
 	(empty old-prefix object-id &rest old-command)
-      (split "/" (script-name))
+      (split "/" (script-name*))
     (declare (ignore empty))
     #?"/$((or prefix old-prefix))/$(object-id)/$((or command old-command))"))
 

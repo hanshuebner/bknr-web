@@ -308,7 +308,7 @@ name has been specified.")))
 
 (defmethod handler-matches-p ((handler template-handler))
   (handler-case 
-      (find-template-pathname handler (script-name))
+      (find-template-pathname handler (script-name*))
     (template-not-found (c)
       (declare (ignore c))
       nil)))
@@ -318,7 +318,7 @@ name has been specified.")))
     ;; Erst body ausfuehren...
     (let ((body
            (expand-template handler
-			    (subseq (script-name)
+			    (subseq (script-name*)
 				    (length (page-handler-prefix handler)))
                             :env (initial-template-environment handler))))
       ;; ... und wenn keine Fehler entdeckt wurden, rausschreiben

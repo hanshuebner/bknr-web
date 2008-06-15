@@ -202,7 +202,7 @@ outputs:
 
 (define-bknr-tag navi-button (&key url text)
   (html (:princ "&nbsp;"))
-  (if (equal (script-name)
+  (if (equal (script-name*)
 	     url)
       (html (:princ-safe text))
       (html (cmslink url (:princ-safe text))))
@@ -259,7 +259,7 @@ outputs:
 (define-bknr-tag site-menu ()
   (destructuring-bind
 	(empty first-level &optional second-level &rest rest)
-      (split "/" (script-name))
+      (split "/" (script-name*))
     (declare (ignore empty rest))
     (html ((:div :id "navcontainer")
 	   (let ((*standard-output* *html-stream*))

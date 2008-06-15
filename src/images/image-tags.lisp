@@ -13,7 +13,7 @@
 	    (html (:princ "&nbsp;")
 		  (if (= i page)
 		      (html (:princ-safe i))
-		      (html (cmslink (format nil "~A?page=~A" (script-name) i) (:princ-safe i))))
+		      (html (cmslink (format nil "~A?page=~A" (script-name*) i) (:princ-safe i))))
 		  (:princ "&nbsp;")))))))
 
 (define-bknr-tag banner (&key link keyword width height)

@@ -226,7 +226,7 @@ authorization?"))
   (:documentation "Return the full base URL for PAGE-HANDLER."))
 
 (defmethod handler-path ((handler page-handler))
-  (subseq (script-name)
+  (subseq (script-name*)
 	  (length (page-handler-prefix handler))))
 
 (defmethod decoded-handler-path ((handler page-handler))
@@ -299,7 +299,7 @@ belongs to the user that is specified in the request."
           (curry #'invoke-handler handler))
          (t
           (setf (session-value :login-redirect-uri)
-                (redirect-uri (parse-uri (script-name))))
+                (redirect-uri (parse-uri (script-name*))))
           (redirect (website-make-path *website* "login")))))
       (t
        'error-404))))
@@ -309,7 +309,7 @@ belongs to the user that is specified in the request."
 
 (defmethod handler-matches-p ((handler page-handler))
   (string-equal (page-handler-prefix handler)
-		(script-name)))
+		(script-name*)))
 
 (defclass redirect-handler (page-handler)
   ((to :initarg :to :reader redirect-handler-to :documentation "url to redirect to")))
@@ -377,10 +377,10 @@ provides for a HANDLER-MATCHES-P method."))
     (warn "prefix handler ~A does not have prefix ending with / - may match unexpectedly" handler)))
 
 (defmethod handler-matches-p ((handler prefix-handler))
-  (and (>= (length (script-name))
+  (and (>= (length (script-name*))
 	   (length (page-handler-prefix handler)))
        (string-equal (page-handler-prefix handler)
-		     (script-name)
+		     (script-name*)
 		     :end2 (length (page-handler-prefix handler)))))
 
 (defclass directory-handler (prefix-handler)
@@ -396,7 +396,7 @@ request as determined by DIRECTORY-HANDLER.")
   (:method ((handler directory-handler))
     (or (aux-request-value 'request-relative-pathname)
         (setf (aux-request-value 'request-relative-pathname)
-              (pathname (subseq (script-name) (1+ (length (page-handler-prefix handler)))))))))
+              (pathname (subseq (script-name*) (1+ (length (page-handler-prefix handler)))))))))
 
 (defmethod handler-matches-p ((handler directory-handler))
   (and (call-next-method)

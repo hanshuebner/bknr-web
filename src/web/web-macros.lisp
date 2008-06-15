@@ -57,7 +57,7 @@
 (defmacro with-image-from-uri ((image-variable prefix) &rest body)
   `(multiple-value-bind
     (match strings)
-    (scan-to-strings (format nil "/~a/([0-9]+)(|/.*)$" ,prefix) (script-name))
+    (scan-to-strings (format nil "/~a/([0-9]+)(|/.*)$" ,prefix) (script-name*))
     (unless match
       (http-error +http-bad-request+ "bad request - missing image path or loid"))
     (let ((,image-variable (store-object-with-id (parse-integer (elt strings 0)))))
