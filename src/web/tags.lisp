@@ -22,7 +22,8 @@
     (emit-tag-children)))
 
 (define-bknr-tag redirect-request (&key target)
-  (redirect target))
+  ;; target here is relative to the current request
+  (redirect (princ-to-string (puri:merge-uris target (script-name*)))))
 
 (define-bknr-tag select-box (name options &key (size 1) default)
   (html ((:select :name name :size size)
