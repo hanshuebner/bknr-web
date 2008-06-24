@@ -283,25 +283,23 @@ name has been specified.")))
 			     handler))))))
 
 (defun invoke-with-error-handlers (fn handler)
-  (if *catch-errors-p*
-      (handler-case
-	  (funcall fn)
-	(user-error (c)
-	  (send-error-response handler (apply #'format
-					      nil
-					      (simple-condition-format-control c)
-					      (simple-condition-format-arguments c))
-			       :response-code +http-ok+))
-	(template-not-found (c)
-	  (send-error-response handler (apply #'format
-					      nil
-					      (simple-condition-format-control c)
-					      (simple-condition-format-arguments c))
-			       :response-code +http-not-found+))
-	(serious-condition (c)
-	  (warn "unexpected failure: ~A" c)
-	  (send-error-response handler (format nil "Internal Error:~%~%~A~%" c))))
-      (funcall fn)))
+  (handler-case
+      (funcall fn)
+    (user-error (c)
+      (send-error-response handler (apply #'format
+                                          nil
+                                          (simple-condition-format-control c)
+                                          (simple-condition-format-arguments c))
+                           :response-code +http-ok+))
+    (template-not-found (c)
+      (send-error-response handler (apply #'format
+                                          nil
+                                          (simple-condition-format-control c)
+                                          (simple-condition-format-arguments c))
+                           :response-code +http-not-found+))
+    (serious-condition (c)
+      (warn "unexpected failure: ~A" c)
+      (send-error-response handler (format nil "Internal Error:~%~%~A~%" c)))))
 
 (defmacro with-error-handlers ((handler) &body body)
   `(invoke-with-error-handlers (lambda () ,@body) ,handler))
