@@ -373,6 +373,14 @@
 	   #:import-handler-import-files
 	   #:import-handler-import-pathname))
 
+(defpackage :bknr.web.frontend
+  (:use :cl)
+  (:export #:frontend-already-running
+	   #:front-end-running-p
+	   #:start-frontend
+	   #:stop-frontend
+	   ))
+
 (defpackage :bknr.images
   (:use :cl
 	:cl-user
