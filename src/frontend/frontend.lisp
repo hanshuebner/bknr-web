@@ -6,27 +6,33 @@
              (declare (ignore condition))
 	     (format stream "BKNR web frontend is already running."))))
 
-(defvar *frontend-pid-file* #p "/tmp/bknr-web-frontend.pid")
+(defvar *frontend-pid-file* #P"bknr-web-frontend.pid")
 
 (defun read-pid-file ()
   (with-open-file (in *frontend-pid-file*)
     (read in)))
 
-(defun front-end-running-p ()
+(defun frontend-running-p ()
   (and (probe-file *frontend-pid-file*)
        (zerop (asdf:run-shell-command "sudo kill -0 ~D" (read-pid-file)))))
 
-(defun start-frontend (&key host backend-port (port 80))
-  (when (front-end-running-p)
+(defun start-frontend (&key
+                       host
+                       backend-port
+                       (varnish-directory (namestring (format nil "/tmp/varnish-~A/" backend-port)))
+                       (port 80))
+  (when (frontend-running-p)
     (cerror "Tear it down!" 'frontend-already-running)
     (stop-frontend :verbose t)
-    (assert (not (front-end-running-p)) nil
+    (assert (not (frontend-running-p)) nil
 	    "Failed to stop frontend. This is a bug."))
-  (let* ((cmd (format nil "sudo varnishd -a ~A:~D ~
+  (let* ((cmd (format nil "sudo varnishd -a ~@[~A~]:~D ~
                                    -b localhost:~D ~
+                                   -n '~A' ~
                                    -P '~A'"
-		      (or host "") port
+		      host port
 		      backend-port
+                      varnish-directory
 		      *frontend-pid-file*))
 	 (exit-code (progn (format t "; $ ~A" cmd)
 			   (asdf:run-shell-command cmd))))
@@ -35,11 +41,16 @@
   (values))
 
 (defun stop-frontend (&key verbose)
-  (if (front-end-running-p)
-      (progn
-	(when verbose (format t "~&; Stopping frontend with PID ~D..." (read-pid-file)))
-	(asdf:run-shell-command "sudo kill -9 ~D" (read-pid-file))
-	(when verbose (format t "done.~%")))
-      (warn "Frontend is not running."))
+  (cond
+    ((frontend-running-p)
+     (when verbose (format t "~&; Stopping frontend with PID ~D..." (read-pid-file)))
+     (asdf:run-shell-command "sudo kill ~D" (read-pid-file))
+     (dotimes (i 10
+               (error "Frontend could not be stopped"))
+       (unless (frontend-running-p)
+         (return)))
+     (when verbose (format t "done.~%")))
+    (t
+     (warn "Frontend is not running.")))
   (values))
 
