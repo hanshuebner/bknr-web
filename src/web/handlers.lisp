@@ -289,8 +289,9 @@ belongs to the user that is specified in the request."
   (start-session)
   (let ((request-user (authorize (website-authorizer *website*))))
     (when (or (not (session-value 'bknr-session))
-              (and request-user
-                   (not (eq (bknr-session-user) request-user))))
+              (and request-user                 
+		   (not (eq (slot-value (session-value 'bknr-session) 'user) ; avoid calling bknr-session-user here
+			    request-user))))
       (setf (session-value 'bknr-session)
             (make-instance 'bknr-session :user (or request-user
                                                    (find-user "anonymous")
