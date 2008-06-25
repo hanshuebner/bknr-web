@@ -160,8 +160,12 @@
                                     :exact nil :resolve t :image image)))
           color))))
 
-(defclass imageproc-handler (image-handler)
+(defclass imageproc-handler (cachable-handler image-handler)
   ())
+
+(defmethod initialize-instance :after ((handler imageproc-handler) &rest initargs)
+  (declare (ignore initargs))
+  (setf (handler-max-age handler) (* 60 60 24 365)))
 
 (defmethod handle-object ((page-handler imageproc-handler) (image (eql nil)))
   (error-404))

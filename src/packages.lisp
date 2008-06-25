@@ -294,7 +294,7 @@
 	   #:page-handler
 	   #:page-handler-prefix
 	   #:page-handler-site
-	   #:page-handler-url
+	   #:page-handler-url	   
            #:authorize
 	   #:authorized-p
 	   #:admin-only-handler
@@ -318,6 +318,7 @@
 	   #:form-field-missing-condition-field
 
 	   #:handler-path
+	   #:handler-max-age
 	   #:decoded-handler-path
 
 	   ;; misc tags xxx should be revised xxx
