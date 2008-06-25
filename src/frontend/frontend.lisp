@@ -33,12 +33,13 @@
 
 (defun frontend-version ()
   (handler-case
-      (or (ppcre:register-groups-bind (version-string)
-	      ("varnish-(\\d+(?:\\.\\d+)+)"
-	       (with-output-to-string (asdf::*verbose-out*)
-		 (execute-shell "varnishd -V")))	
-	    (mapcar #'parse-integer  (ppcre:split "\\." version-string)))
-	  (error 'error))
+      (let ((varnishd-v (with-output-to-string (asdf::*verbose-out*)
+			  (execute-shell "varnishd -V"))))
+	(or (when (ppcre:scan "varnish-trunk" varnishd-v) 'trunk)
+	    (ppcre:register-groups-bind (version-string)
+		("varnish-(\\d+(?:\\.\\d+)+)" varnishd-v)	
+	      (mapcar #'parse-integer  (ppcre:split "\\." version-string)))
+	    (error 'error)))
     (error () (error "Cannot determine frontend version."))))
 
 (defun frontend-running-p ()
@@ -69,7 +70,7 @@
   (let ((*varnish-directory* (ensure-directories-exist varnish-directory))
         (*frontend-verbose* verbose))
     ;; check frontend version
-    (assert (equal '(1 1 1) (frontend-version)))
+    (assert (equal 'trunk (frontend-version)))
     ;; generate config file
     (with-open-file (out (frontend-config-file) :direction :output :if-exists :supersede)
       (generate-frontend-config out :backend-port backend-port))
