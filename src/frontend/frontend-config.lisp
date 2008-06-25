@@ -1,7 +1,5 @@
 (in-package :bknr.web.frontend)
 
-
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun read-template (path)
     (cl-interpol:enable-interpol-syntax)
@@ -17,4 +15,13 @@
 						    *compile-file-pathname*))
 		  stream)
   (values))
+
+;;; quick hack
+;;; as this file depends on config-template.lisp-expr
+;;; we dont want to produce a stale fasl
+;;; better to use ASDF
+(eval-when (:load-toplevel)
+  (let ((fasl-path (compile-file-pathname *load-pathname*)))
+    (when (probe-file fasl-path)
+      (delete-file fasl-path))))
 

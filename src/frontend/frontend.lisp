@@ -23,10 +23,13 @@
 (defun frontend-config-file ()
   (merge-pathnames #P"config.vcl" *varnish-directory*))
 
-(defun read-pid-file ()
+(defun read-pid-file (&key (errorp t))
   (asdf:run-shell-command (format nil "sudo chmod 644 ~A" (namestring (frontend-pid-file))))
-  (with-open-file (in (frontend-pid-file))
-    (read in)))
+  (let ((pid (with-open-file (in (frontend-pid-file))
+	       (read in nil))))
+    (when (and (null pid) errorp)
+      (error "pid-file is empty"))
+    pid))
 
 (defun frontend-version ()
   (handler-case
@@ -40,6 +43,7 @@
 
 (defun frontend-running-p ()
   (and (probe-file (frontend-pid-file))
+       (read-pid-file :errorp nil)	; pid file might be empty
        (zerop (execute-shell "sudo kill -0 ~D" (read-pid-file)))))
 
 (defun stop-frontend (&key verbose)
@@ -67,7 +71,7 @@
     ;; check frontend version
     (assert (equal '(1 1 1) (frontend-version)))
     ;; generate config file
-    (with-open-file (out (frontend-config-file) :direction :output :if-exists :supsersede)
+    (with-open-file (out (frontend-config-file) :direction :output :if-exists :supersede)
       (generate-frontend-config out :backend-port backend-port))
     ;; stop running frontend if needed
     (when (frontend-running-p)
@@ -87,6 +91,12 @@
                                     (namestring varnish-directory)
                                     (namestring (frontend-pid-file)))))
       (unless (zerop exit-code)
-        (error "Attempt to launch varnishd exit code ~D." exit-code)))
+        (error "Attempt to launch varnishd exit code ~D.~
+              ~%Among other possible reasons, it might be that:~
+              ~%  - you are not allowed to run sudo~
+              ~%  - varnishd could not successfully compile the VCL config~%"
+	       exit-code))
+      (when verbose
+	(format t "; varnishd has PID ~D" (read-pid-file))))
     (values)))
 
