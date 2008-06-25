@@ -8,17 +8,21 @@ backend b {
   set backend.port = "$<backend-port>";
 }
 
-# sub vcl_recv {
-#   lookup;
-# }
+sub vcl_recv {
+  if (req.http.Cookie) {
+    if (req.url ~ "^(/image|/static)") {
+         remove req.http.Cookie;		  
+    }
+  }
+}
 
-# sub vcl_hit {
-#   deliver;
-# }
-
-# sub vcl_fetch {
-#   insert;
-# }
+sub vcl_fetch {
+   if (obj.http.Set-Cookie) {
+     if (req.url ~ "^(/image|/static)") {
+        remove obj.http.Set-Cookie;
+     }		  
+   }
+}
 
 
 '
