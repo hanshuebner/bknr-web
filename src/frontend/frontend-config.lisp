@@ -8,12 +8,16 @@
 	   (read in))   
       (cl-interpol:disable-interpol-syntax))))
 
+(defun cachable-prefixes-regex ()
+  (format nil "^(~{~A~^|~})" (mapcar #'page-handler-prefix (website-cachable-handlers *website*))))
+
 (defun generate-frontend-config (stream &key
 				 backend-port)  
   (check-type backend-port (integer 0))
-  (write-sequence #.(read-template (merge-pathnames "config-template.lisp-expr"
-						    *compile-file-pathname*))
-		  stream)
+  (let ((cachable-prefixes-regex (cachable-prefixes-regex)))
+    (write-sequence #.(read-template (merge-pathnames "config-template.lisp-expr"
+						      *compile-file-pathname*))
+		    stream))
   (values))
 
 ;;; quick hack

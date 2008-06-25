@@ -10,7 +10,7 @@ backend b {
 
 sub vcl_recv {
   if (req.http.Cookie) {
-    if (req.url ~ "^(/image|/static)") {
+    if (req.url ~ "$<cachable-prefixes-regex>") {
          remove req.http.Cookie;		  
     }
   }
@@ -18,7 +18,7 @@ sub vcl_recv {
 
 sub vcl_fetch {
    if (obj.http.Set-Cookie) {
-     if (req.url ~ "^(/image|/static)") {
+     if (req.url ~ "$<cachable-prefixes-regex>") {
         remove obj.http.Set-Cookie;
      }		  
    }
