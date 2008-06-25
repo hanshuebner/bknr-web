@@ -22,6 +22,7 @@
    (handler-definitions :initarg :handler-definitions
 			:accessor website-handler-definitions)
    (handlers :initform nil :accessor website-handlers)
+   (cachable-handlers :initform nil :accessor website-cachable-handlers)
    (menu :initarg :menu)
    (menudef-xml-file :initarg :menudef-xml-file
 		     :accessor website-menudef-xml-file)
@@ -176,6 +177,14 @@ handler definition.  Every method returns a list of handler instances.")
 	 (if (bknr-session-user)
 	     (html ", logged in as " (html-link (bknr-session-user)))
 	     (html ", not logged in")))))
+
+
+(defclass cachable-handler ()
+  ())
+
+(defmethod initialize-instance :after ((handler cachable-handler) &rest initargs)
+  (declare (ignore initargs))
+  (push handler (website-cachable-handlers (page-handler-site handler))))
 
 (defclass page-handler ()
   ((prefix :initarg :prefix
