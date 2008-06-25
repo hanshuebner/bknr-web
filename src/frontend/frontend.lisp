@@ -20,10 +20,23 @@
 (defun frontend-pid-file ()
   (merge-pathnames #P"bknr-web-frontend.pid" *varnish-directory*))
 
+(defun frontend-config-file ()
+  (merge-pathnames #P"config.vcl" *varnish-directory*))
+
 (defun read-pid-file ()
   (asdf:run-shell-command (format nil "sudo chmod 644 ~A" (namestring (frontend-pid-file))))
   (with-open-file (in (frontend-pid-file))
     (read in)))
+
+(defun frontend-version ()
+  (handler-case
+      (or (ppcre:register-groups-bind (version-string)
+	      ("varnish-(\\d+(?:\\.\\d+)+)"
+	       (with-output-to-string (asdf::*verbose-out*)
+		 (execute-shell "varnishd -V")))	
+	    (mapcar #'parse-integer  (ppcre:split "\\." version-string)))
+	  (error 'error))
+    (error () (error "Cannot determine frontend version."))))
 
 (defun frontend-running-p ()
   (and (probe-file (frontend-pid-file))
@@ -49,21 +62,28 @@
                        (verbose t)
                        (varnish-directory (pathname (format nil "/tmp/varnish-~A/" backend-port)))
                        (port 80))
-  (let ((*varnish-directory* varnish-directory)
+  (let ((*varnish-directory* (ensure-directories-exist varnish-directory))
         (*frontend-verbose* verbose))
+    ;; check frontend version
+    (assert (equal '(1 1 1) (frontend-version)))
+    ;; generate config file
+    (with-open-file (out (frontend-config-file) :direction :output :if-exists :supsersede)
+      (generate-frontend-config out :backend-port backend-port))
+    ;; stop running frontend if needed
     (when (frontend-running-p)
       #+(or) (cerror "Stop the running frontend process" 'frontend-already-running)
       (stop-frontend :verbose verbose)
       (assert (not (frontend-running-p)) nil
               "Failed to stop frontend. This is a bug."))
+    ;; start frontend
     (when verbose
       (format t "; Starting varnishd frontend process on ~@[~A~]:~A~%" host port))
     (let ((exit-code (execute-shell "sudo varnishd -a ~@[~A~]:~D ~
-                                   -b localhost:~D ~
+                                   -f '~A' ~
                                    -n '~A' ~
                                    -P '~A'"
                                     host port
-                                    backend-port
+                                    (frontend-config-file)
                                     (namestring varnish-directory)
                                     (namestring (frontend-pid-file)))))
       (unless (zerop exit-code)

@@ -94,7 +94,11 @@
 								 "web-utils")))
 			  :depends-on ("sysclasses" "packages"))
 
-		 (:module "frontend" :depends-on ("packages") :components ((:file "frontend")))
+		 (:module "frontend"
+			  :depends-on ("packages")
+			  :serial t
+			  :components ((:file "frontend-config")
+				       (:file "frontend")))
 
 		 (:module "rss" :components ((:file "rss")
                                              (:file "rss-handlers" :depends-on ("rss")))
