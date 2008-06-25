@@ -268,6 +268,7 @@
 	   #:website-session-info
            #:website-base-href
            #:website-make-path
+	   #:website-cachable-handlers
 	   #:host
 	   #:publish-site
 	   #:publish-handler
@@ -289,6 +290,7 @@
 	   #:edit-object-handler
 	   #:template-handler
 	   #:template-handler-destination
+	   #:cachable-handler
 	   #:page-handler
 	   #:page-handler-prefix
 	   #:page-handler-site
@@ -374,7 +376,7 @@
 	   #:import-handler-import-pathname))
 
 (defpackage :bknr.web.frontend
-  (:use :cl)
+  (:use :cl :bknr.web)
   (:export #:frontend-already-running
 	   #:front-end-running-p
 	   #:start-frontend

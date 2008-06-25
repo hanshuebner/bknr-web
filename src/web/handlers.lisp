@@ -180,11 +180,14 @@ handler definition.  Every method returns a list of handler instances.")
 
 
 (defclass cachable-handler ()
-  ())
+  ((max-age :initform 60 :initarg :max-age :accessor handler-max-age)))
 
 (defmethod initialize-instance :after ((handler cachable-handler) &rest initargs)
   (declare (ignore initargs))
   (push handler (website-cachable-handlers (page-handler-site handler))))
+
+(defmethod handle :before ((handler cachable-handler))
+  (setf (header-out :cache-control) (format nil "max-age=~A" (handler-max-age handler))))
 
 (defclass page-handler ()
   ((prefix :initarg :prefix
@@ -388,7 +391,7 @@ provides for a HANDLER-MATCHES-P method."))
 		     (script-name*)
 		     :end2 (length (page-handler-prefix handler)))))
 
-(defclass directory-handler (prefix-handler)
+(defclass directory-handler (cachable-handler prefix-handler)
   ((destination :initarg :destination
 		:reader page-handler-destination))
   (:documentation
