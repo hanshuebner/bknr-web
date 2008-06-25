@@ -12,7 +12,7 @@
     session))
 
 (defun bknr-session ()
-  (session-value 'bknr-session))
+  (ensure-bknr-session))
 
 (defun bknr-session-user ()
   (slot-value (bknr-session) 'user))

@@ -274,6 +274,7 @@ authorization?"))
 (defun ensure-bknr-session ()
   "Ensure that the BKNR-SESSION session variable is set and that it
 belongs to the user that is specified in the request."
+  (start-session)
   (let ((request-user (authorize (website-authorizer *website*))))
     (when (or (not (session-value 'bknr-session))
               (and request-user
@@ -289,8 +290,6 @@ belongs to the user that is specified in the request."
   (let ((handler (find-if #'handler-matches-p (website-handlers *website*))))
     (cond
       (handler
-       (start-session)
-       (ensure-bknr-session)
        (cond
          ((authorized-p handler)
           (curry #'invoke-handler handler))
