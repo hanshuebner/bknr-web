@@ -15,7 +15,7 @@
       (if (member image-format '(:jpg :jpeg))
 	  (write-image-to-stream stream image-format :image image :quality quality)
 	  (write-image-to-stream stream image-format :image image))
-      (finish-output stream))))
+      (force-output stream))))
 
 (defmethod store-image-xml-info ((image store-image))
   (cxml:with-element "image"
