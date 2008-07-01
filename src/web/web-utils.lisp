@@ -69,7 +69,7 @@ macro after the request body has been executed."
           (when post (post-parameters*))))
 
 (defun query-param (param-name &key (get t) (post t))
-  (let ((value (cdr (assoc param-name (query-params :get get :post post) :test #'equal))))
+  (let ((value (cdr (assoc param-name (query-params :get get :post post) :test #'string-equal))))
     (unless (equal value "")
       value)))
 

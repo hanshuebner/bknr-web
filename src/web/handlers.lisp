@@ -180,7 +180,10 @@ handler definition.  Every method returns a list of handler instances.")
 
 
 (defclass cachable-handler ()
-  ((max-age :initform 60 :initarg :max-age :accessor handler-max-age)))
+  ((max-age :initform 5
+            :initarg :max-age
+            :accessor handler-max-age
+            :documentation "Default value to set for the Cache-Control max-age header.")))
 
 (defmethod initialize-instance :after ((handler cachable-handler) &rest initargs)
   (declare (ignore initargs))
