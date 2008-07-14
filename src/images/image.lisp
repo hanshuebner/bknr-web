@@ -58,8 +58,8 @@
     ,@body))
 
 (defmacro with-store-image* ((image) &body body)
-  `(with-image-from-file (cl-gd:*default-image* (blob-pathname ,image) (image-type-keyword ,image))
-    ,@body))
+  `(with-store-image (cl-gd:*default-image* ,image)
+     ,@body))
 
 (defun make-store-image (&key (image *default-image*)
 			 name
