@@ -32,3 +32,8 @@
                          (when fastest-entry
                            (html
                             (:princ (format-elapsed (car fastest-entry))))))))))))))))
+
+(defun reset-handler-statistics ()
+  (dolist (handler (website-handlers *website*))
+    (setf (page-handler-statistics handler) (make-handler-statistics))))
+
