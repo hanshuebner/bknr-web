@@ -79,6 +79,9 @@
 								 "sessions"
 								 "site"))
 
+                                             (:file "handler-statistics-handler"
+                                                    :depends-on ("handlers"))
+
 					     (:file "template-handler"
 						    :depends-on ("handlers"))
 

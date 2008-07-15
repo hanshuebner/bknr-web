@@ -210,7 +210,9 @@ handler definition.  Every method returns a list of handler instances.")
 		 :reader page-handler-content-type
 		 :initform "text/html")
    (site :initarg :site
-	 :reader page-handler-site))
+	 :reader page-handler-site)
+   (statistics :initform (make-handler-statistics)
+               :accessor page-handler-statistics))
   (:documentation "Simple page handler publishing a serve request under a simple URL"))
 
 (defmethod initialize-instance :after ((handler page-handler) &key name prefix &allow-other-keys)
@@ -223,6 +225,50 @@ handler definition.  Every method returns a list of handler instances.")
 (defmethod print-object ((handler page-handler) stream)
   (print-unreadable-object (handler stream :type t)
     (format stream "~A" (page-handler-prefix handler))))
+
+;; Each handler has a statistics record that keeps track of the
+;; slowest and fastest URLs on this handler and the average time that
+;; processing on this handler takes.
+
+(defconstant +statistics-keep-atypical-count+ 10)
+
+(defstruct (handler-statistics (:conc-name hs-))
+  (slowest (make-array +statistics-keep-atypical-count+ :initial-element nil))
+  (fastest (make-array +statistics-keep-atypical-count+ :initial-element nil))
+  (count 0)
+  average)
+
+(defun slowest-time (statistics)
+  (or (car (aref (hs-slowest statistics) 0))
+      0))
+
+(defun fastest-time (statistics)
+  (or (car (aref (hs-fastest statistics) 0))
+      most-positive-fixnum))
+
+(defun note-run-time-for-statistics (handler run-time)
+  (let ((statistics (page-handler-statistics handler)))
+    (when (< run-time (fastest-time statistics))
+      (setf (aref (hs-fastest statistics) 0) (cons run-time (tbnl:script-name*))
+            (hs-fastest statistics) (sort (hs-fastest statistics) #'>
+                                          :key (lambda (entry)
+                                                 (or (car entry)
+                                                     most-positive-fixnum)))))
+    (when (> run-time (slowest-time statistics))
+      (setf (aref (hs-slowest statistics) 0) (cons run-time (tbnl:script-name*))
+            (hs-slowest statistics) (sort (hs-slowest statistics) #'<
+                                          :key (lambda (entry)
+                                                 (or (car entry)
+                                                     0)))))
+    (cond
+      ((plusp (hs-count statistics))
+       (setf (hs-average statistics) (/ (+ (* (hs-count statistics) (hs-average statistics))
+                                           run-time)
+                                        (1+ (hs-count statistics))))
+       (incf (hs-count statistics)))
+      (t
+       (setf (hs-average statistics) run-time
+             (hs-count statistics) 1)))))
 
 (defgeneric handle (page-handler)
   (:documentation "Handle an incoming HTTP request, returning either a
@@ -279,7 +325,12 @@ authorization?"))
                                                       (with-http-body ()
                                                         (website-show-error-page *website* e))
                                                     (do-error-log-request e)))))))
-      (handle handler))))
+      (let ((start (get-internal-real-time)))
+        (prog1
+            (handle handler)
+          (let ((duration (- (get-internal-real-time) start)))
+            (note-run-time-for-statistics handler duration)))))))
+
 
 (defmethod handle ((page-handler page-handler))
   (funcall (page-handler-function page-handler)))
