@@ -111,11 +111,14 @@ CHANNEL to STREAM.")
 (defgeneric rss-channel-items (channel)
   (:documentation "Return all non-expired items in channel.")
   (:method ((channel rss-channel))
-    (let ((expiry-time (- (get-universal-time) (rss-channel-max-item-age channel))))
-      (remove-if (lambda (item) (or (object-destroyed-p item)
-                                    (< (rss-item-pub-date item) expiry-time)))
-                 (slot-value channel 'items)))))
-
+    (let ((days (when (boundp 'hunchentoot:*request*) (bknr.web:query-param "days"))))
+      (let ((expiry-time (- (get-universal-time) (if days
+                                                     (* 60 60 25 (parse-integer days))
+                                                     (rss-channel-max-item-age channel)))))
+        (remove-if (lambda (item) (or (object-destroyed-p item)
+                                      (< (rss-item-pub-date item) expiry-time)))
+                   (slot-value channel 'items))))))
+  
 (deftransaction rss-channel-cleanup (channel)
   "Remove expired items from the items list.  Can be used to reduce
 the memory footprint of very high volume channels."
