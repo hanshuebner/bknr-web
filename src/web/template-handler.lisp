@@ -306,7 +306,7 @@ name has been specified.")))
 
 (defmethod handler-matches-p ((handler template-handler))
   (handler-case 
-      (find-template-pathname handler (script-name*))
+      (find-template-pathname handler (subseq (script-name*) 1))
     (template-not-found (c)
       (declare (ignore c))
       nil)))
