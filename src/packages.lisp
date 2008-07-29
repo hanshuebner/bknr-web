@@ -33,6 +33,8 @@
 	   #:rss-channel-image
 	   #:rss-channel-textinput
 	   #:rss-channel-items
+           #:rss-channel-archive
+           #:rss-channel-archived-months
 	   #:rss-channel-xml
 
 	   ;; item

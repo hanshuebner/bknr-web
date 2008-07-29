@@ -21,8 +21,10 @@
    (path :update :initform nil)
    (description :update :initform nil)
    (last-update :update :initform (get-universal-time))
-   (max-item-age :update :initform (* 4 7 24 60 60))
-   (items :update :initform nil))
+   (max-item-age :update
+                 :initform 28
+                 :documentation "default maximum item age in days")
+   (items :none :initform nil))
   (:documentation "RSS-CHANNEL models one rss channel.  Items are
 added to a channel by deriving other persistent classes from the mixin
 class RSS-ITEM.  When an object of such a derived class is created, it
@@ -60,7 +62,8 @@ accepted."))
 
 (defmethod prepare-for-snapshot ((channel rss-channel))
   "When snapshotting, remove items from CHANNEL that are destroyed."
-  (setf (slot-value channel 'items) (remove-if #'object-destroyed-p (rss-channel-items channel))))
+  (setf (slot-value channel 'items)
+        (remove-if #'object-destroyed-p (rss-channel-items channel))))
 
 ;; Mixin for items
 
@@ -108,16 +111,42 @@ CHANNEL to STREAM.")
                                        (rss-channel-items channel)))
             (rss-item-xml item)))))))
 
-(defgeneric rss-channel-items (channel)
+(defun days-from-query-parameter ()
+  (when (boundp 'hunchentoot:*request*)
+    (let ((days-string (bknr.web:query-param "days")))
+      (when days-string
+        (parse-integer days-string)))))
+
+(defun rss-channel-archive (channel)
+  "Return the channel archive consisting of lists of lists ((MONTH YEAR) ITEM...)"
+  (group-on (rss-channel-items channel)
+            :test #'equal
+            :key (lambda (item)
+                   (multiple-value-bind (seconds minutes hours day month year)
+                       (decode-universal-time (rss-item-pub-date item))
+                     (declare (ignore seconds minutes hours day))
+                     (list month year)))))
+
+(defgeneric rss-channel-items (channel &key)
   (:documentation "Return all non-expired items in channel.")
-  (:method ((channel rss-channel))
-    (let ((days (when (boundp 'hunchentoot:*request*) (bknr.web:query-param "days"))))
-      (let ((expiry-time (- (get-universal-time) (if days
-                                                     (* 60 60 25 (parse-integer days))
-                                                     (rss-channel-max-item-age channel)))))
-        (remove-if (lambda (item) (or (object-destroyed-p item)
-                                      (< (rss-item-pub-date item) expiry-time)))
-                   (slot-value channel 'items))))))
+  (:method ((channel rss-channel) &key days month)
+    (cond
+      (month
+       (cdr (find month (rss-channel-archive channel) :test #'equal)))
+      (t
+       (let* ((days (or days
+                        (days-from-query-parameter)
+                        (rss-channel-max-item-age channel)))
+              (expiry-time (- (get-universal-time) (* 60 60 25 days))))
+         (remove-if (lambda (item) (or (object-destroyed-p item)
+                                       (< (rss-item-pub-date item) expiry-time)))
+                    (slot-value channel 'items)))))))
+
+(defgeneric rss-channel-archived-months (channel)
+  (:documentation "Return a list of lists (MONTH YEAR) for which the
+  CHANNEL has archived entries.")
+  (:method (channel)
+    (mapcar #'car (rss-channel-archive channel))))
   
 (deftransaction rss-channel-cleanup (channel)
   "Remove expired items from the items list.  Can be used to reduce
