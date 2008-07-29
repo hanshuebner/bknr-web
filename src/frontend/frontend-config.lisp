@@ -9,7 +9,8 @@
       (cl-interpol:disable-interpol-syntax))))
 
 (defun cachable-prefixes-regex ()
-  (format nil "^(~{~A~^|~})" (mapcar #'page-handler-prefix (website-cachable-handlers bknr.web:*website*))))
+  (format nil "^(~{~A~^|~})"
+          (mapcar #'page-handler-prefix (website-cachable-handlers bknr.web::*website*))))
 
 (defun generate-frontend-config (stream &key
 				 backend-port)  

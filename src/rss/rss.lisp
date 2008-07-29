@@ -147,7 +147,7 @@ transaction context.")
   (:method ((channel (eql nil)) item)
     (warn "no RSS channel defined for item ~A" item)))
 
-(defmethod initialize-persistent-instance :after ((rss-item rss-item))
+(defmethod initialize-persistent-instance :after ((rss-item rss-item) &key)
   (add-item (rss-item-channel rss-item) rss-item))
 
 (defmethod destroy-object :before ((rss-item rss-item))
