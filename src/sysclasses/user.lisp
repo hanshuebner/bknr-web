@@ -60,7 +60,7 @@ password against an encrypted one."
 		(user-login object)
 		"unbound"))))
 
-(defmethod initialize-instance ((user user) &key)
+(defmethod initialize-persistent-instance ((user user) &key)
   (let* ((plaintext-password (slot-value user 'password))
 	 (password (when plaintext-password (crypt-md5 plaintext-password (make-salt)))))
     (setf (slot-value user 'password) password)))
@@ -72,7 +72,7 @@ password against an encrypted one."
 (define-persistent-class smb-user (user)
   ())
 
-(defmethod initialize-instance ((user smb-user) &key)
+(defmethod initialize-persistent-instance ((user smb-user) &key)
   (let* ((plaintext-password (slot-value user 'password)))
     (when plaintext-password
       (set-smb-password (user-login user) plaintext-password))
