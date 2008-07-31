@@ -121,35 +121,37 @@ CHANNEL to STREAM.")
   (when (boundp 'hunchentoot:*request*)
     (let ((month-string (bknr.web:query-param "month")))
       (when month-string
-        (mapcar #'parse-integer (cl-ppcre:split "([-/]|(?<=..))" month-string :limit 2))))))
+        (mapcar #'parse-integer (cl-ppcre:split "([-/]|(?<=....))" month-string :limit 2))))))
 
 (defun rss-channel-archive (channel)
   "Return the channel archive consisting of lists of lists ((MONTH YEAR) ITEM...)"
-  (group-on (rss-channel-items channel)
+  (group-on (rss-channel-items channel :all t)
             :test #'equal
             :key (lambda (item)
                    (multiple-value-bind (seconds minutes hours day month year)
                        (decode-universal-time (rss-item-pub-date item))
                      (declare (ignore seconds minutes hours day))
-                     (list month year)))))
+                     (list year month)))))
 
 (defgeneric rss-channel-items (channel &key)
   (:documentation "Return all non-expired items in channel.")
-  (:method ((channel rss-channel) &key days month count)
+  (:method ((channel rss-channel) &key days month count all)
     (unless month
       (setf month (month-from-query-parameter)))
     (unless days
       (setf days (or (days-from-query-parameter)
                      (rss-channel-max-item-age channel))))
-    (let ((items (if month
-                     (cdr (find month (rss-channel-archive channel) :test #'equal))
-                     (let ((expiry-time (- (get-universal-time) (* 60 60 24 days))))
-                       (remove-if (lambda (item) (or (object-destroyed-p item)
-                                                     (< (rss-item-pub-date item) expiry-time)))
-                                  (slot-value channel 'items))))))
-      (if count
-          (subseq items 0 (min count (length items)))
-          items))))
+    (if all
+        (remove-if #'object-destroyed-p (slot-value channel 'items))
+        (let ((items (if month
+                         (cdr (find month (rss-channel-archive channel) :test #'equal :key #'car))
+                         (let ((expiry-time (- (get-universal-time) (* 60 60 24 days))))
+                           (remove-if (lambda (item) (or (object-destroyed-p item)
+                                                         (< (rss-item-pub-date item) expiry-time)))
+                                      (slot-value channel 'items))))))
+          (if count
+              (subseq items 0 (min count (length items)))
+              items)))))
 
 (defgeneric rss-channel-archived-months (channel)
   (:documentation "Return a list of lists (MONTH YEAR) for which the
