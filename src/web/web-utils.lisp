@@ -46,7 +46,7 @@
 (defmethod bknr.images:import-image ((upload upload) &rest args &key &allow-other-keys)
   (apply #'bknr.images:import-image (upload-pathname upload)
          :name (pathname-name (upload-original-filename upload))
-         :type (make-keyword-from-string (pathname-type (upload-original-filename upload))) args))
+         :type (image-type-symbol (upload-content-type upload)) args))
 
 (defun all-request-params ()
   "Return all non-empty request parameters - This includes all parameters encoded in the URL as
