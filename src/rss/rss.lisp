@@ -117,6 +117,12 @@ CHANNEL to STREAM.")
       (when days-string
         (parse-integer days-string)))))
 
+(defun month-from-query-parameter ()
+  (when (boundp 'hunchentoot:*request*)
+    (let ((month-string (bknr.web:query-param "month")))
+      (when month-string
+        (mapcar #'parse-integer (cl-ppcre:split "([-/]|(?<=..))" month-string :limit 2))))))
+
 (defun rss-channel-archive (channel)
   "Return the channel archive consisting of lists of lists ((MONTH YEAR) ITEM...)"
   (group-on (rss-channel-items channel)
@@ -129,18 +135,21 @@ CHANNEL to STREAM.")
 
 (defgeneric rss-channel-items (channel &key)
   (:documentation "Return all non-expired items in channel.")
-  (:method ((channel rss-channel) &key days month)
-    (cond
-      (month
-       (cdr (find month (rss-channel-archive channel) :test #'equal)))
-      (t
-       (let* ((days (or days
-                        (days-from-query-parameter)
-                        (rss-channel-max-item-age channel)))
-              (expiry-time (- (get-universal-time) (* 60 60 25 days))))
-         (remove-if (lambda (item) (or (object-destroyed-p item)
-                                       (< (rss-item-pub-date item) expiry-time)))
-                    (slot-value channel 'items)))))))
+  (:method ((channel rss-channel) &key days month count)
+    (unless month
+      (setf month (month-from-query-parameter)))
+    (unless days
+      (setf days (or (days-from-query-parameter)
+                     (rss-channel-max-item-age channel))))
+    (let ((items (if month
+                     (cdr (find month (rss-channel-archive channel) :test #'equal))
+                     (let ((expiry-time (- (get-universal-time) (* 60 60 24 days))))
+                       (remove-if (lambda (item) (or (object-destroyed-p item)
+                                                     (< (rss-item-pub-date item) expiry-time)))
+                                  (slot-value channel 'items))))))
+      (if count
+          (subseq items 0 (min count (length items)))
+          items))))
 
 (defgeneric rss-channel-archived-months (channel)
   (:documentation "Return a list of lists (MONTH YEAR) for which the
