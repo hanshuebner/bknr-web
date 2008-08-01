@@ -19,19 +19,30 @@
                  names)
      ,@body))
 
-(defmacro with-query-params ((&rest params) &body body)
-  (let ((vars (loop for param in params
-                 when (and (symbolp param)
-                           (not (null param)))
-                 collect (list param `(query-param ,(string-downcase (symbol-name param))))
-                 when (consp param)
-                 collect (list (car param)
-                               `(or (parameter ,(string-downcase (symbol-name (car param))))
-                                    ,(second param))))))
-    (if vars
-        `(let ,vars
-           ,@body)
-        (first body))))
+(defmacro with-query-params ((&rest parameters) &body body)
+  "PARAMETERS is a list of parameter-specifiers. A parameter-specifier
+has the form (VARIABLE &OPTIONAL DEFAULT-VALUE TYPE) or can be a
+single VARIABLE.
+
+If the TYPE is specified, the value is converted like in
+HUNCHENTOOT:DEFINE-EASY-HANDLER when PARAMETER-TYPE is given.
+
+With respect to the conversion of an empty string, there is a subtle
+difference between the TYPE specified as STRING and the TYPE left
+unspecified. In the former case, the converted value will still be an
+empty string, while in the latter VARIABLE will be bound to NIL."
+  (flet ((parameter-binding (parameter-specifier)
+           (destructuring-bind (variable &optional default-value type)
+               (ensure-list parameter-specifier)
+             (let ((query-param-form (if type
+                                         `(query-param ,(string-downcase variable) :type ',type)
+                                         `(query-param ,(string-downcase variable)))))
+               `(,variable
+                 ,(if default-value
+                      `(or ,query-param-form ,default-value)
+                      query-param-form))))))
+    `(let ,(mapcar #'parameter-binding parameters)
+       ,@body)))
 
 (defmacro form-case (&rest cases)
   `(cond

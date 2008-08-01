@@ -70,10 +70,12 @@ macro after the request body has been executed."
   (append (when get (get-parameters*))
           (when post (post-parameters*))))
 
-(defun query-param (param-name &key (get t) (post t))
+(defun query-param (param-name &key (get t) (post t) type)
   (let ((value (cdr (assoc param-name (query-params :get get :post post) :test #'string-equal))))
-    (unless (equal value "")
-      value)))
+    (if type
+        (hunchentoot::convert-parameter value type)
+        (unless (equal value "")
+          value))))
 
 (defun query-param-list (param-name &key (get t) (post t))
   (assoc-values param-name (query-params :get get :post post)
