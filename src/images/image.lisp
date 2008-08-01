@@ -123,7 +123,7 @@
         ;; xxx not tx safe.
         (let ((store-image (apply #'make-object 
                                   class-name
-                                  :owners (list user)
+                                  :owner user
                                   :timestamp (get-universal-time)
                                   :name name
                                   :type (make-keyword-from-string type)

@@ -136,7 +136,7 @@
 	   #:set-user-last-login
 
 	   #:owned-object
-	   #:owned-object-owners
+	   #:owned-object-owner
 	   #:store-objects-owned-by
            #:store-object-owners
 

@@ -179,7 +179,7 @@ within transaction context.")
   (:documentation "Add ITEM to CHANNEL.  May only be called within
 transaction context.")
   (:method ((channel rss-channel) item)
-    (setf (slot-value channel 'items) (cons item (rss-channel-items channel))))
+    (push item (slot-value channel 'items)))
   (:method ((channel string) item)
     (aif (find-rss-channel channel)
          (add-item it item)

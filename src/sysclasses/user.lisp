@@ -190,24 +190,23 @@ password against an encrypted one."
 ;;; owned objects
 
 (define-persistent-class owned-object (store-object)
-  ((owners :update :initform nil
-	   :index-type hash-list-index
-	   :index-reader store-object-owners)))
+  ((owner :update :initform nil
+          :index-type hash-index
+          :index-reader store-object-owner)))
 
-(deftransaction owned-object-remove-owner (object owner)
-  (setf (owned-object-owners object)
-	(remove owner (owned-object-owners object))))
-
-(deftransaction owned-object-add-owner (object owner)
-  (pushnew owner (owned-object-owners object)))
+(defmethod convert-slot-value-while-restoring ((object owned-object) (slot-name (eql 'owners)) owners)
+  (when owners
+    (unless (= 1 (length owners))
+      (warn "object ~A has more than one owner ~S, using first" object owners))
+    (setf (slot-value object 'owner) (car owners))))
 
 (defgeneric user-owns-object-p (user object))
 
-(defmethod user-owns-object-p ((user user) object)
+(defmethod user-owns-object-p ((user user) (object t))
   nil)
 
 (defmethod user-owns-object-p ((user user) (object owned-object))
-  (member user (owned-object-owners object)))
+  (eq user (owned-object-owner object)))
 
 (define-persistent-class message-event (event)
   ((from :read :initform nil)
