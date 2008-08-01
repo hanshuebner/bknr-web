@@ -18,7 +18,7 @@
 
 (defun redirect-uri (uri)
   (make-instance 'uri :path (uri-path uri)
-		 :query (uri-query uri)))
+                 :query (uri-query uri)))
 
 (defun request-uploaded-files ()
   "Return a list of UPLOAD structures describing the file uploads in the request."
@@ -27,7 +27,8 @@
           (let ((uploads (remove-if-not #'listp (post-parameters*) :key #'cdr)) retval)
             (dolist (upload-info uploads)
               (destructuring-bind (name pathname original-filename content-type) upload-info
-                (push (make-upload :name name :pathname pathname :original-filename original-filename :content-type content-type) retval)))
+                (push (make-upload :name name :pathname pathname :original-filename original-filename
+                                   :content-type content-type) retval)))
             (nreverse retval))))
   (aux-request-value 'uploaded-files))
 
@@ -36,12 +37,13 @@
 
 (defmacro with-image-from-upload ((image upload &rest args) &body body)
   `(with-image-from-file (,image (upload-pathname ,upload)
-                          (make-keyword-from-string (pathname-type (upload-original-filename ,upload))) ,@args)
-    ,@body))
+                                 (make-keyword-from-string (pathname-type (upload-original-filename ,upload)))
+                                 ,@args)
+     ,@body))
 
 (defmacro with-image-from-upload* ((upload &rest args) &body body)
   `(with-image-from-upload (cl-gd:*default-image* ,upload ,@args)
-    ,@body))
+     ,@body))
 
 (defmethod bknr.images:import-image ((upload upload) &rest args &key &allow-other-keys)
   (apply #'bknr.images:import-image (upload-pathname upload)
@@ -56,12 +58,12 @@ request's plist.  Uploaded files will be automatically deleted by the with-http-
 macro after the request body has been executed."
   (unless (aux-request-value 'bknr-parsed-parameters)
     (setf (aux-request-value 'bknr-parsed-parameters)
-	    (remove-if (lambda (value)
-                         "Remove empty strings (reported as NIL) and uploaded files"
-                         (or (equal value "")
-                             (listp value)))
-                       (query-params)
-                       :key #'cdr)))
+          (remove-if (lambda (value)
+                       "Remove empty strings (reported as NIL) and uploaded files"
+                       (or (equal value "")
+                           (listp value)))
+                     (query-params)
+                     :key #'cdr)))
   (aux-request-value 'bknr-parsed-parameters))
 
 (defun query-params (&key (get t) (post t))
@@ -85,8 +87,8 @@ macro after the request body has been executed."
 
 (defun request-variables ()
   (loop for key being the hash-keys of *req-var-hash*
-	collect key
-	collect (request-variable key)))
+     collect key
+     collect (request-variable key)))
 
 (defun http-error (response message)
   (with-bknr-page (:title #?"error: $(message)" :response response)
@@ -95,19 +97,19 @@ macro after the request body has been executed."
 
 (defun keywords-from-query-param-list (param &key (remove-empty t))
   (let ((keywords (mapcar #'(lambda (s)
-			      (make-keyword-from-string (string-trim '(#\Space #\Tab #\Newline) s)))
-			  param)))
+                              (make-keyword-from-string (string-trim '(#\Space #\Tab #\Newline) s)))
+                          param)))
     (if remove-empty
-	(remove-if #'(lambda (x) (eq x :||)) keywords)
-	keywords)))
+        (remove-if #'(lambda (x) (eq x :||)) keywords)
+        keywords)))
 
 (defun html-quote (string)
   (regex-replace-all "([&<>])" string #'(lambda (target-string start end match-start &rest args)
-					  (declare (ignore start end args))
-					  (ecase (elt target-string match-start)
-					    (#\& "&amp;")
-					    (#\< "&lt;")
-					    (#\> "&gt;")))))
+                                          (declare (ignore start end args))
+                                          (ecase (elt target-string match-start)
+                                            (#\& "&amp;")
+                                            (#\< "&lt;")
+                                            (#\> "&gt;")))))
 
 (defun parse-url ()
   (values-list (cddr (mapcar #'url-decode (split "/" (script-name*))))))
@@ -119,16 +121,16 @@ macro after the request body has been executed."
 
 (defun parse-date-field (name)
   (let ((timespec (mapcar #'(lambda (var) (parse-integer
-					   (query-param (concatenate 'string name "-" var))
-					   :junk-allowed t))
-			  '("minute" "hour" "day" "month" "year"))))
+                                           (query-param (concatenate 'string name "-" var))
+                                           :junk-allowed t))
+                          '("minute" "hour" "day" "month" "year"))))
     (unless (car timespec)
       (rplaca timespec 0))
     (unless (cadr timespec)
       (rplaca (cdr timespec) 0))
     (if (every #'identity timespec)
-	(apply #'encode-universal-time 0 timespec)
-	nil)))
+        (apply #'encode-universal-time 0 timespec)
+        nil)))
 
 (defun bknr-url-path (handler)
   "Returns the Path of the request under the handler prefix"
@@ -137,7 +139,7 @@ macro after the request body has been executed."
 
 (defun self-url (&key command prefix)
   (destructuring-bind
-	(empty old-prefix object-id &rest old-command)
+        (empty old-prefix object-id &rest old-command)
       (split "/" (script-name*))
     (declare (ignore empty))
     #?"/$((or prefix old-prefix))/$(object-id)/$((or command old-command))"))
@@ -149,53 +151,53 @@ macro after the request body has been executed."
   "Perform simple text to HTML conversion.  http urls are replaced by links, internal links to
 images become image tags."
   (setf string (regex-replace-all
-		#?r"bknr:([0-9A-Za-z$-_.+!*'()]+)" string
-		#'(lambda (target-string start end match-start match-end reg-starts reg-ends)
-		    (declare (ignore start end match-start match-end))
-		    (let ((url (subseq target-string (aref reg-starts 0) (aref reg-ends 0))))
-		      (regex-replace-all "URL" (if (all-matches "^/image" url)
-						   "<img src=\"URL\" />"
-						   "<a href=\"URL\">URL</a>")
-					 url)))))
+                #?r"bknr:([0-9A-Za-z$-_.+!*'()]+)" string
+                #'(lambda (target-string start end match-start match-end reg-starts reg-ends)
+                    (declare (ignore start end match-start match-end))
+                    (let ((url (subseq target-string (aref reg-starts 0) (aref reg-ends 0))))
+                      (regex-replace-all "URL" (if (all-matches "^/image" url)
+                                                   "<img src=\"URL\" />"
+                                                   "<a href=\"URL\">URL</a>")
+                                         url)))))
   (setf string (regex-replace-all
-		#?r"(http://[0-9A-Za-z$-_.+!*'()]+)" string
-		#'(lambda (target-string start end match-start match-end &rest args)
-		    (declare (ignore start end args))
-		    (let ((url (subseq target-string match-start match-end)))
-		      (regex-replace-all "URL" (if (all-matches "(?i)\\.(gif|jpe?g|png)$" url)
-						   "<img src=\"URL\" />"
-						   "<a href=\"URL\" target=\"_blank\">URL</a>")
-					 url)))))
+                #?r"(http://[0-9A-Za-z$-_.+!*'()]+)" string
+                #'(lambda (target-string start end match-start match-end &rest args)
+                    (declare (ignore start end args))
+                    (let ((url (subseq target-string match-start match-end)))
+                      (regex-replace-all "URL" (if (all-matches "(?i)\\.(gif|jpe?g|png)$" url)
+                                                   "<img src=\"URL\" />"
+                                                   "<a href=\"URL\" target=\"_blank\">URL</a>")
+                                         url)))))
   (setf string (regex-replace-all "[\\r\\n]" string "<br>"))
   string)
 
 (defun make-wiki-hrefs (string)
   (regex-replace-all #?r"\[(.+?)\]" string
-		     #'(lambda (target-string start end match-start match-end
-				reg-starts reg-ends)
-			 (declare (ignore start end match-start match-end))
-			 (let ((keyword (subseq target-string
-						(svref reg-starts 0)
-						(svref reg-ends 0))))
-			   (format nil "<a class=\"wikilink\" href=\"/wiki/~a\">~a</a>"
-				   keyword
-				   keyword)))))
+                     #'(lambda (target-string start end match-start match-end
+                                reg-starts reg-ends)
+                         (declare (ignore start end match-start match-end))
+                         (let ((keyword (subseq target-string
+                                                (svref reg-starts 0)
+                                                (svref reg-ends 0))))
+                           (format nil "<a class=\"wikilink\" href=\"/wiki/~a\">~a</a>"
+                                   keyword
+                                   keyword)))))
 
 (defmacro bknr-handler-case (body &rest handler-forms)
   `(if *bknr-debug*
-    ,body
-    (handler-case
-	,body
-      ,@handler-forms)))
+       ,body
+       (handler-case
+           ,body
+         ,@handler-forms)))
 
 (defun emit-element-attributes (attributes)
   (loop for (key value) on attributes by #'cddr
-        do (progn
-             (princ " ")
-             (princ (string-downcase (symbol-name key)))
-             (princ "=\"")
-             (princ value)
-             (princ "\""))))
+     do (progn
+          (princ " ")
+          (princ (string-downcase (symbol-name key)))
+          (princ "=\"")
+          (princ value)
+          (princ "\""))))
 
 (defun emit-html (&rest forms)
   (let ((element (car forms)))
@@ -205,7 +207,7 @@ images become image tags."
       ;; (:foo ...) or ((:foo ...) ...)
       (cons (if (consp (car element))
                 (handle-tag (caar element) (cdar element) (cdr element)) ; ((:foo ...) ...)
-                (handle-tag (car element) nil (cdr element))))           ; (:foo ...)
+                (handle-tag (car element) nil (cdr element)))) ; (:foo ...)
       ;; "foo"
       (string (princ element))))
   (when (cdr forms)
@@ -221,15 +223,15 @@ images become image tags."
     (when attributes
       (emit-element-attributes attributes))
     (if body
-	;; emit tag body
-	(progn
-	  (princ ">")
-	  (apply #'emit-html body)
-	  (princ "</")
-	  (princ tag-name)
-	  (princ ">"))
-	;; empty body, close tag immediately
-	(princ " />"))))
+        ;; emit tag body
+        (progn
+          (princ ">")
+          (apply #'emit-html body)
+          (princ "</")
+          (princ tag-name)
+          (princ ">"))
+        ;; empty body, close tag immediately
+        (princ " />"))))
 
 (defun encode-urlencoded (string)
-(regex-replace-all #?r"\+" (url-encode string) "%20"))
+  (regex-replace-all #?r"\+" (url-encode string) "%20"))
