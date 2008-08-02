@@ -3,7 +3,6 @@
 (enable-interpol-syntax)
 
 (defvar *bknr-debug* nil)
-(defvar *website* nil)
 
 (defvar *website-modules* (make-hash-table :test #'equal))
 
