@@ -98,7 +98,7 @@
 			  :depends-on ("sysclasses" "packages"))
 
 		 (:module "frontend"
-			  :depends-on ("packages")
+			  :depends-on ("packages" "web")
 			  :serial t
 			  :components ((:file "frontend-config")
 				       (:file "frontend")))
