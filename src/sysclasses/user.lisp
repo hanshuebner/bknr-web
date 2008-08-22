@@ -83,7 +83,8 @@ password against an encrypted one."
     (set-smb-password (user-login user) plaintext-password)))
 
 (defmethod admin-p ((user user))
-  (user-has-flag user :admin))
+  (when (user-has-flag user :admin)
+    t))
 
 (defmethod user-mail-error-p ((user user))
   (and (slot-boundp user 'mail-error)

@@ -63,7 +63,7 @@ accepted."))
 (defmethod prepare-for-snapshot ((channel rss-channel))
   "When snapshotting, remove items from CHANNEL that are destroyed."
   (setf (slot-value channel 'items)
-        (remove-if #'object-destroyed-p (rss-channel-items channel))))
+        (remove-if #'object-destroyed-p (slot-value channel 'items))))
 
 ;; Mixin for items
 
