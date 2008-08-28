@@ -115,7 +115,7 @@ name has been specified.")))
             (destructuring-bind (name value) a
 	      (if (listp name)
 		  (destructuring-bind (local-name . namespace-uri) name
-                    (let ((namespace-alias (gethash namespace-uri *nsuri-lname-map*)))
+                    (let ((namespace-alias (gethash namespace-uri *nsuri-alias-map*)))
                       (unless namespace-alias
                         (error "cannot map namespace URI ~A to namespace-alias when making attribute ~A" namespace-uri a))
                       (sax:make-attribute :namespace-uri namespace-uri
@@ -171,12 +171,9 @@ name has been specified.")))
   ;; be revised with newer cxml releases.
   (let* ((toplevel-attributes (cxml-xmls::compute-attributes/lnames toplevel t))
          (*template-expander* expander)
-         (*nsuri-lname-map* (let ((map (make-hash-table :test #'equal)))
+         (*nsuri-alias-map* (let ((map (make-hash-table :test #'equal)))
                               (dolist (attribute toplevel-attributes)
                                 (when (scan "^xmlns($|:)" (sax:attribute-qname attribute))
-                                  (format t "mapping ~A => ~A~%"
-                                          (sax:attribute-namespace-uri attribute)
-                                          (sax:attribute-local-name attribute))
                                   (setf (gethash (sax:attribute-value attribute) map)
                                         (sax:attribute-local-name attribute))))
                               map)))
