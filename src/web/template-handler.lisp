@@ -107,15 +107,22 @@ name has been specified.")))
 	       (t (format nil "~A" val))))))
       string))
 
+(defvar *nsuri-alias-map* nil
+  "Maps namespace URI to alias name as declared in the current document.")
+
 (defun xmls-attributes-to-sax (fn attrs)
   (mapcar (lambda (a)
             (destructuring-bind (name value) a
 	      (if (listp name)
-		  (destructuring-bind (qname . namespace-uri) name
-		    (sax:make-attribute :namespace-uri namespace-uri
-					:qname qname
-					:value (funcall fn value)
-					:specified-p t))
+		  (destructuring-bind (local-name . namespace-uri) name
+                    (let ((namespace-alias (gethash namespace-uri *nsuri-lname-map*)))
+                      (unless namespace-alias
+                        (error "cannot map namespace URI ~A to namespace-alias when making attribute ~A" namespace-uri a))
+                      (sax:make-attribute :namespace-uri namespace-uri
+                                          :qname (format nil "~A:~A" namespace-alias local-name)
+                                          :local-name local-name
+                                          :value (funcall fn value)
+                                          :specified-p t)))
 		  (sax:make-attribute :qname name
 				      :value (funcall fn value)
 				      :specified-p t))))
@@ -162,12 +169,22 @@ name has been specified.")))
   ;; In order to generate xmlns attributes, we use the internal
   ;; CXML-XMLS::COMPUTE-ATTRIBUTES/LNAMES function.  This may need to
   ;; be revised with newer cxml releases.
-  (sax:start-element *html-sink* (node-ns toplevel) (node-name toplevel) (node-name toplevel)
-		     (cxml-xmls::compute-attributes/lnames toplevel t))
-  (let ((*template-expander* expander))
+  (let* ((toplevel-attributes (cxml-xmls::compute-attributes/lnames toplevel t))
+         (*template-expander* expander)
+         (*nsuri-lname-map* (let ((map (make-hash-table :test #'equal)))
+                              (dolist (attribute toplevel-attributes)
+                                (when (scan "^xmlns($|:)" (sax:attribute-qname attribute))
+                                  (format t "mapping ~A => ~A~%"
+                                          (sax:attribute-namespace-uri attribute)
+                                          (sax:attribute-local-name attribute))
+                                  (setf (gethash (sax:attribute-value attribute) map)
+                                        (sax:attribute-local-name attribute))))
+                              map)))
+    (sax:start-element *html-sink* (node-ns toplevel) (node-name toplevel) (node-name toplevel)
+                       toplevel-attributes)
     (dolist (node (node-children toplevel))
-      (emit-template-node expander node)))
-  (sax:end-element *html-sink* (node-ns toplevel) (node-name toplevel) (node-name toplevel)))
+      (emit-template-node expander node))
+    (sax:end-element *html-sink* (node-ns toplevel) (node-name toplevel) (node-name toplevel))))
 
 (defun find-template (dir components)
   (if (null components)
