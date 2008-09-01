@@ -144,8 +144,9 @@ name has been specified.")))
                                (cxml-xmls:make-xmls-builder)
                                :validate nil))
          real-attributes
-         namespace-declarations
+         (namespace-declarations (list '(("xml" . "http://www.w3.org/2000/xmlns/") "http://www.w3.org/XML/1998/namespace")))
          (nsuri-alias-map (make-hash-table :test #'equal)))
+    (setf (gethash "http://www.w3.org/XML/1998/namespace" nsuri-alias-map) "xml")
     (dolist (attribute (cxml-xmls:node-attrs dom))
       (destructuring-bind ((alias . namespace-url) value) attribute
         (cond
