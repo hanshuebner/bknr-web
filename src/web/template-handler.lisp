@@ -51,7 +51,7 @@ name has been specified.")))
 	(function-name (string-upcase name)))
     (or (gethash function-name (or (gethash (symbol-name package-name) *template-functions*)
 				   (error "can't find package ~A in tag function registry" package-name)))
-	(error "can't find tag function ~A:~A in command package ~A" ns name package-name))))
+	(error "can't find tag function ~A in command package ~A" name package-name))))
 
 (defclass local-template-expander ()
   ((parent :initarg :parent :reader local-template-expander-parent)

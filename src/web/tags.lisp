@@ -13,7 +13,7 @@
 				template)))
   (let* ((expander *template-expander*)
          (pathname (find-template-pathname expander template))
-         (toplevel (get-cached-template pathname expander))
+         (toplevel (parsed-template-dom (get-cached-template pathname expander)))
          (*toplevel-children* *tag-children*))
     (emit-template-node *template-expander* toplevel)))
 
