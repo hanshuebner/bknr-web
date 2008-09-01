@@ -128,17 +128,47 @@ name has been specified.")))
 				      :specified-p t))))
 	  attrs))
 
+(defstruct parsed-template
+  namespace-attrs
+  dom
+  last-change
+  nsuri-alias-map)
+
 (defun parse-template (template-pathname)
-  (let ((sax:*include-xmlns-attributes* t))
-    (cxml:parse-file (namestring (probe-file template-pathname))
-		     (cxml-xmls:make-xmls-builder)
-                     :validate nil)))
+  "Parse the XML template in the file TEMPLATE-PATHNAME, return a PARSED-TEMPLATE structure."
+  ;; In order to generate xmlns attributes, we use the internal
+  ;; CXML-XMLS::COMPUTE-ATTRIBUTES/LNAMES function.  This may need to
+  ;; be revised with newer cxml releases.
+  (let* ((sax:*include-xmlns-attributes* t)
+         (dom (cxml:parse-file (namestring (probe-file template-pathname))
+                               (cxml-xmls:make-xmls-builder)
+                               :validate nil))
+         real-attributes
+         namespace-declarations
+         (nsuri-alias-map (make-hash-table :test #'equal)))
+    (dolist (attribute (cxml-xmls:node-attrs dom))
+      (destructuring-bind ((alias . namespace-url) value) attribute
+        (cond
+          ((equal namespace-url "http://www.w3.org/2000/xmlns/")
+           (setf (gethash value nsuri-alias-map) alias)
+           (push attribute namespace-declarations))
+          (t
+           (push attribute real-attributes)))))
+    (setf (cxml-xmls:node-attrs dom) real-attributes)
+    (make-parsed-template
+     :namespace-attrs (cxml-xmls::compute-attributes/lnames (cxml-xmls:make-node :attrs namespace-declarations) t)
+     :dom dom
+     :last-change (file-write-date template-pathname)
+     :nsuri-alias-map nsuri-alias-map)))
 
 (defvar *tag-children*)
 
 (defun emit-tag-children ()
   "Function to be called by application defined tags to emit their children."
   (mapc (curry #'emit-template-node *template-expander*) *tag-children*))
+
+(defvar *namespace-attributes* nil
+  "Bound to the list of namespace attributes to emit on the top level node.")
 
 (defun emit-template-node (expander node)
   (if (stringp node)
@@ -159,29 +189,19 @@ name has been specified.")))
                                   and collect (expand-variables name #'get-template-var))))))
           (t
            (sax:start-element *html-sink* nil nil name
-                              (xmls-attributes-to-sax (rcurry #'expand-variables #'get-template-var) attrs))
+                              (append (when *namespace-attributes*
+                                        (prog1
+                                            *namespace-attributes*
+                                          (setf *namespace-attributes* nil)))
+                                      (xmls-attributes-to-sax (rcurry #'expand-variables #'get-template-var) attrs)))
            (dolist (child children)
              (emit-template-node expander child))
            (sax:end-element *html-sink* nil nil name))))))
 
-(defun emit-parsed-template (expander toplevel)
-  "Emit the given XMLS compatible structure as XML to *HTML-SINK*."
-  ;; In order to generate xmlns attributes, we use the internal
-  ;; CXML-XMLS::COMPUTE-ATTRIBUTES/LNAMES function.  This may need to
-  ;; be revised with newer cxml releases.
-  (let* ((toplevel-attributes (cxml-xmls::compute-attributes/lnames toplevel t))
-         (*template-expander* expander)
-         (*nsuri-alias-map* (let ((map (make-hash-table :test #'equal)))
-                              (dolist (attribute toplevel-attributes)
-                                (when (scan "^xmlns($|:)" (sax:attribute-qname attribute))
-                                  (setf (gethash (sax:attribute-value attribute) map)
-                                        (sax:attribute-local-name attribute))))
-                              map)))
-    (sax:start-element *html-sink* (node-ns toplevel) (node-name toplevel) (node-name toplevel)
-                       toplevel-attributes)
-    (dolist (node (node-children toplevel))
-      (emit-template-node expander node))
-    (sax:end-element *html-sink* (node-ns toplevel) (node-name toplevel) (node-name toplevel))))
+(defun emit-parsed-template (expander parsed-template)
+  "Emit the given parsed template as XHML to *HTML-SINK*."
+  (let* ((*template-expander* expander))
+    (emit-template-node expander (parsed-template-dom parsed-template))))
 
 (defun find-template (dir components)
   (if (null components)
@@ -221,28 +241,28 @@ name has been specified.")))
 (defun get-cached-template (pathname expander)
   (let* ((table (template-expander-cached-templates expander))
          (namestring (namestring pathname))
-         (cache-entry (gethash namestring table))
+         (parsed-template (gethash namestring table))
          (current-write-date (file-write-date namestring)))
-    (unless (and cache-entry (eql (car cache-entry) current-write-date))
-      (setf cache-entry
-            (cons current-write-date (parse-template pathname)))
-      (setf (gethash namestring table) cache-entry))
-    (cdr cache-entry)))
+    (unless (and parsed-template
+                 (eql current-write-date (parsed-template-last-change parsed-template)))
+      (setf parsed-template (parse-template pathname)
+            (gethash namestring table) parsed-template))
+    parsed-template))
 
-(defun emit-template (expander stream node env)
+(defun emit-template (expander stream parsed-template env)
   (let* ((*template-env* env)
          (*html-sink* (cxml:make-character-stream-sink stream :canonical nil)))
-    (if (node-attribute node "suppress-xml-headers")
-	(emit-parsed-template expander node)
-	(progn
-	  (sax:start-document *html-sink*)
-	  (sax:start-dtd *html-sink*
-			 "html"
-			 "-//W3C//DTD XHTML 1.0 Transitional//EN"
-			 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd")
-	  (sax:end-dtd *html-sink*)
-	  (emit-parsed-template expander node)))
+    (sax:start-dtd *html-sink*
+                   "html"
+                   "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd")
+    (sax:end-dtd *html-sink*)
+    (let ((*namespace-attributes* (parsed-template-namespace-attrs parsed-template))
+          (*nsuri-alias-map* (parsed-template-nsuri-alias-map parsed-template)))
+      (emit-parsed-template expander parsed-template))
+    ;; We call sax:end-document to close the sink, which works even though we did not call sax:start-document.
     (sax:end-document *html-sink*)))
+
 ;; template handler
 
 (defclass template-handler (prefix-handler template-expander)
