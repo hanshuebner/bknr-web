@@ -148,13 +148,15 @@ name has been specified.")))
          (nsuri-alias-map (make-hash-table :test #'equal)))
     (setf (gethash "http://www.w3.org/XML/1998/namespace" nsuri-alias-map) "xml")
     (dolist (attribute (cxml-xmls:node-attrs dom))
-      (destructuring-bind ((alias . namespace-url) value) attribute
-        (cond
-          ((equal namespace-url "http://www.w3.org/2000/xmlns/")
-           (setf (gethash value nsuri-alias-map) alias)
-           (push attribute namespace-declarations))
-          (t
-           (push attribute real-attributes)))))
+      (if (consp (car attribute))
+          (destructuring-bind ((alias . namespace-url) value) attribute
+            (cond
+              ((equal namespace-url "http://www.w3.org/2000/xmlns/")
+               (setf (gethash value nsuri-alias-map) alias)
+               (push attribute namespace-declarations))
+              (t
+               (push attribute real-attributes))))
+          (push attribute real-attributes)))
     (setf (cxml-xmls:node-attrs dom) real-attributes)
     (make-parsed-template
      :namespace-attrs (cxml-xmls::compute-attributes/lnames (cxml-xmls:make-node :attrs namespace-declarations) t)
