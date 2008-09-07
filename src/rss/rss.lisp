@@ -168,7 +168,7 @@ the memory footprint of very high volume channels."
   (:documentation "Remove ITEM from CHANNEL.  May only be called
 within transaction context.")
   (:method ((channel rss-channel) item)
-    (setf (slot-value channel 'items) (remove item (rss-channel-items channel))))
+    (setf (slot-value channel 'items) (remove item (slot-value channel 'items))))
   (:method ((channel string) item)
     (aif (find-rss-channel channel)
          (remove-item it item)))
