@@ -156,7 +156,7 @@
   ("/image-union" image-union-handler)
   ("/image-intersection" image-intersection-handler)
   ("/image" imageproc-handler)
-  ("/image-import" image-import-handler)
+  ("/import-images" import-images-handler)
   ("/session-image" session-image-handler)
   ("/xml-image-query" xml-image-query-handler)
   ("/xml-image-browser" xml-image-browser-handler))

@@ -2,13 +2,13 @@
 
 (enable-interpol-syntax)
 
-(defclass image-import-handler (import-handler)
+(defclass import-images-handler (import-handler)
   ())
 
-(defmethod import-handler-spool-files ((handler image-import-handler))
+(defmethod import-handler-spool-files ((handler import-images-handler))
   (image-directory-recursive (import-handler-import-pathname handler)))
 
-(defmethod handle-form ((handler image-import-handler) action)
+(defmethod handle-form ((handler import-images-handler) action)
   (with-bknr-page (:title #?"image import directory")
     ((:form :method "post")
      ((:div :class "keyword-choose")
@@ -25,11 +25,11 @@
 	     "Set keywords from directory"))
       (:div (submit-button "import" "Import"))))
     ((:div :class "import-list")
-     (:h2 "Images present in import spool:")
+     (:h2 "Images present in import spool directory " (:b (:princ (import-handler-import-pathname handler))))
      (loop for file in (import-handler-spool-files handler)
 	   do (html (:princ-safe (namestring file)) (:br))))))
 
-(defmethod import-handler-import-files ((handler image-import-handler))
+(defmethod import-handler-import-files ((handler import-images-handler))
   (let* ((keywords (keywords-from-query-param-list (query-param-list "keyword")))
 	 (spool-dir (import-handler-import-pathname handler))
 	 (class-name (apply #'find-symbol (reverse (split "::?" (query-param "class-name"))))))
@@ -40,7 +40,7 @@
 		      :spool (import-handler-spool-dir handler)
 		      :keywords-from-dir (query-param "keyfromdir"))))
 
-(defmethod handle-form ((handler image-import-handler) (action (eql :import)))
+(defmethod handle-form ((handler import-images-handler) (action (eql :import)))
   (let* ((import-log (import-handler-import-files handler))
 	 (successful-images (remove-if-not #'(lambda (element) (typep element 'store-image))
 					   import-log

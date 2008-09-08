@@ -153,7 +153,7 @@
                args)))))
 
 (defun directory-recursive (pathname &key list-directories)
-  (loop for file in (directory pathname)
+  (loop for file in (directory (merge-pathnames #P"**/*.*" pathname))
         when (pathname-name file)
         collect file
         unless (pathname-name file)
