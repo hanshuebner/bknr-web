@@ -26,8 +26,8 @@
     (setf (aux-request-value 'uploaded-files)
           (let ((uploads (remove-if-not #'listp (post-parameters*) :key #'cdr)) retval)
             (dolist (upload-info uploads)
-              (destructuring-bind (name pathname original-filename content-type) upload-info
-                (push (make-upload :name name :pathname pathname :original-filename original-filename
+              (destructuring-bind (name pathname original-pathname content-type) upload-info
+                (push (make-upload :name name :pathname pathname :original-filename (cl-ppcre:regex-replace "^.*[\\\\/]" original-pathname "")
                                    :content-type content-type) retval)))
             (nreverse retval))))
   (aux-request-value 'uploaded-files))
