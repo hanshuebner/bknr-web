@@ -43,7 +43,11 @@
                      :reader template-expander-default-template
                      :documentation
                      "Name of the default template to use when no path
-name has been specified.")))
+name has been specified.")
+   (catch-all :initarg :catch-all :initform nil
+              :reader template-expander-catch-all
+              :documentation "If non-NIL, direct all requests to the
+              default template.")))
 
 (defmethod find-tag-function ((expander template-expander) name ns)
   (let ((package-name (cdr (find ns (template-expander-command-packages expander)
@@ -226,11 +230,15 @@ name has been specified.")))
   (remove "" (split "/" path) :test #'equal))
 
 (defmethod find-template-pathname ((expander template-expander) template-name)
-  (let ((components (or (split-path template-name)
-                        (and (template-expander-default-template expander)
-                             (split-path (template-expander-default-template expander))))))
+  (let* ((default-template-components (and (template-expander-default-template expander)
+                                          (split-path (template-expander-default-template expander))))
+         (components (or (split-path template-name) default-template-components)))
     (multiple-value-bind (pathname ret-components)
-	(find-template (template-expander-destination expander) components)
+        (find-template (template-expander-destination expander) components)
+      (when (and (not pathname)
+                 (template-expander-catch-all expander))
+        (multiple-value-setq (pathname ret-components)
+          (find-template (template-expander-destination expander) default-template-components)))
       (unless pathname
 	(template-not-found template-name))
       (values pathname
