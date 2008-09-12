@@ -23,14 +23,6 @@
 (defun user-error (str &rest args)
   (error 'user-error :format-control str :format-arguments args))
 
-;; template-not-found is raised when a template could not be found
-
-(define-condition template-not-found (simple-error)
-  ())
-
-(defun template-not-found (&rest path)
-  (error 'template-not-found :format-control "Template ~S not found" :format-arguments path))
-
 (defclass template-expander ()
   ((command-packages :initarg :command-packages
 		     :initform nil
@@ -239,15 +231,14 @@ name has been specified.")
                  (template-expander-catch-all expander))
         (multiple-value-setq (pathname ret-components)
           (find-template (template-expander-destination expander) default-template-components)))
-      (unless pathname
-	(template-not-found template-name))
-      (values pathname
-	      ret-components
-	      (with-output-to-string (s)
-		(dolist (component (subseq components 0 (- (length components)
-							   (length ret-components))))
-		  (write-char #\/ s)
-		  (write-string component s)))))))
+      (when pathname
+        (values pathname
+                ret-components
+                (with-output-to-string (s)
+                  (dolist (component (subseq components 0 (- (length components)
+                                                             (length ret-components))))
+                    (write-char #\/ s)
+                    (write-string component s))))))))
 
 (defun get-cached-template (pathname expander)
   (let* ((table (template-expander-cached-templates expander))
@@ -296,23 +287,22 @@ name has been specified.")
 		     env))
 	(incf i)))
     (setf env (acons :*path-arg* (first args) env))
-    (if (probe-file template-pathname)
-        ;; Wir koennten hier direkt auf *html-stream* schreiben ohne
-        ;; den Umweg ueber einen String zu gehen.  Aber: Wir moechten
-        ;; im Allgemeinen erst waehrend des Expandierens noch merken
-        ;; koennen, dass z.B. ein Fehler vorliegt oder ein Redirect
-        ;; geschickt werden muss.  Daher waere es keine gute Idee, sich
-        ;; zu diesem Zeitpunkt schon auf einen HTTP response code
-        ;; festgelegt zu haben.
-	(let ((*default-pathname-defaults* (make-pathname :host (pathname-host template-pathname)
-							  :device (pathname-device template-pathname)
-							  :directory (pathname-directory template-pathname))))
-	  (with-output-to-string (stream)
-	    (emit-template handler
-			   stream
-			   (get-cached-template template-pathname handler)
-			   env)))
-        (template-not-found template-pathname))))
+    (when (probe-file template-pathname)
+      ;; Wir koennten hier direkt auf *html-stream* schreiben ohne
+      ;; den Umweg ueber einen String zu gehen.  Aber: Wir moechten
+      ;; im Allgemeinen erst waehrend des Expandierens noch merken
+      ;; koennen, dass z.B. ein Fehler vorliegt oder ein Redirect
+      ;; geschickt werden muss.  Daher waere es keine gute Idee, sich
+      ;; zu diesem Zeitpunkt schon auf einen HTTP response code
+      ;; festgelegt zu haben.
+      (let ((*default-pathname-defaults* (make-pathname :host (pathname-host template-pathname)
+                                                        :device (pathname-device template-pathname)
+                                                        :directory (pathname-directory template-pathname))))
+        (with-output-to-string (stream)
+          (emit-template handler
+                         stream
+                         (get-cached-template template-pathname handler)
+                         env))))))
 
 (defmethod error-template-pathname (handler &optional (error-type "user-error"))
   (find-template-pathname handler error-type))
@@ -337,12 +327,6 @@ name has been specified.")
                                           (simple-condition-format-control c)
                                           (simple-condition-format-arguments c))
                            :response-code +http-ok+))
-    (template-not-found (c)
-      (send-error-response handler (apply #'format
-                                          nil
-                                          (simple-condition-format-control c)
-                                          (simple-condition-format-arguments c))
-                           :response-code +http-not-found+))
     (serious-condition (c)
       (warn "unexpected failure: ~A" c)
       (send-error-response handler (format nil "Internal Error:~%~%~A~%" c)))))
@@ -351,11 +335,8 @@ name has been specified.")
   `(invoke-with-error-handlers (lambda () ,@body) ,handler))
 
 (defmethod handler-matches-p ((handler template-handler))
-  (handler-case 
-      (find-template-pathname handler (subseq (script-name*) 1))
-    (template-not-found (c)
-      (declare (ignore c))
-      nil)))
+  (or (template-expander-catch-all handler)
+      (find-template-pathname handler (subseq (script-name*) 1))))
 
 (defmethod handle ((handler template-handler))
   (with-error-handlers (handler)
