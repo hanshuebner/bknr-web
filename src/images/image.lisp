@@ -152,18 +152,9 @@
                :type (bknr.utils:image-type-symbol (cdr (assoc :content-type headers)))
                args)))))
 
-(defun directory-recursive (pathname &key list-directories)
-  (loop for file in (directory (merge-pathnames #P"**/*.*" pathname))
-        when (pathname-name file)
-        collect file
-        unless (pathname-name file)
-        nconc (directory-recursive file)
-        and when list-directories
-        collect file))
-
-(defun image-directory-recursive (pathname &key list-directories)
+(defun image-directory-recursive (pathname)
   (remove-if-not #'pathname-content-type
-                 (directory-recursive pathname :list-directories list-directories)))
+                 (directory (merge-pathnames #P"**/*.*" pathname))))
 
 (defun import-directory (pathname &key user keywords (spool *user-spool-directory-root*)
 			 keywords-from-dir (class-name 'store-image) (delete-files t))
@@ -172,7 +163,7 @@
     (unless (subdir-p pathname spool)
       (error "imported directory ~a is not a subdir of spool ~a~%"
              pathname spool))
-    (loop for file in (image-directory-recursive pathname :list-directories t)
+    (loop for file in (image-directory-recursive pathname)
           when (pathname-name file)
           collect (handler-case
                       (let ((image (import-image
