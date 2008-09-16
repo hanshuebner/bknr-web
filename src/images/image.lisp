@@ -166,7 +166,7 @@
                  (directory-recursive pathname :list-directories list-directories)))
 
 (defun import-directory (pathname &key user keywords (spool *user-spool-directory-root*)
-			 keywords-from-dir (class-name 'store-image))
+			 keywords-from-dir (class-name 'store-image) (delete-files t))
   "Import all files from directory by giving them relative names"
   (let ((path-spool (cdr (pathname-directory spool))))
     (unless (subdir-p pathname spool)
