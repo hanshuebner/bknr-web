@@ -171,8 +171,13 @@
   (error-404))
 
 (defmethod handle-object ((page-handler imageproc-handler) image)
-  (with-http-response (:content-type (image-content-type (image-type-keyword image)))
-    (handle-if-modified-since (blob-timestamp image))
-    (setf (header-out "Last-Modified") (rfc-1123-date (blob-timestamp image)))
-    (imageproc image (cdr (decoded-handler-path page-handler)))))
+  (handle-if-modified-since (blob-timestamp image))
+  (setf (header-out :last-modified) (rfc-1123-date (blob-timestamp image)))
+  (let ((operations (cdr (decoded-handler-path page-handler))))
+    (if operations
+        (imageproc image operations)
+        (with-http-response (:content-type (image-content-type (image-type-keyword image)))
+          (setf (header-out :content-length) (blob-size image))
+          (with-open-file (blob-data (blob-pathname image) :element-type '(unsigned-byte 8))
+            (copy-stream blob-data (send-headers) '(unsigned-byte 8)))))))
     
