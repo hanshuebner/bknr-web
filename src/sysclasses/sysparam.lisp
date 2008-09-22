@@ -2,7 +2,7 @@
 
 (defvar *sysparams* (make-hash-table :test #'eql))
 
-; xxx does not make use of datastore indices
+                                        ; xxx does not make use of datastore indices
 (define-persistent-class sysparam ()
   ((name :read)
    (value :update)))
@@ -16,6 +16,6 @@
 
 (defun set-sysparam (name value)
   (let ((param (or (find name (store-objects-with-class 'sysparam) :key #'sysparam-name)
-		   (make-object 'sysparam :name name))))
+		   (make-instance 'sysparam :name name))))
     (change-slot-values param 'value value)
     (setf (gethash name *sysparams*) param)))

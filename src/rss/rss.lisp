@@ -8,8 +8,8 @@
 
 ;;; Paul Graham, On Lisp, p191
 (defmacro aif (test-form then-form &optional else-form)
- `(let ((it ,test-form))
-   (if it ,then-form ,else-form)))
+  `(let ((it ,test-form))
+     (if it ,then-form ,else-form)))
 
 ;; Class for channels
 
@@ -76,7 +76,7 @@ class RSS-CHANNEL for an overview."))
   "Create an RSS channel with the given NAME, TITLE, DESCRIPTION and
 LINK (all strings) which are the mandatory fields in an RSS channel.
 Returns the persistent RSS-CHANNEL object that has been created."
-  (apply #'make-object 'rss-channel :name name :title title :description description :path path args))
+  (apply #'make-instance 'rss-channel :name name :title title :description description :path path args))
   
 (defun render-mandatory-element (channel element)
   (with-element (string-downcase (symbol-name element))
@@ -187,7 +187,7 @@ transaction context.")
   (:method ((channel (eql nil)) item)
     (warn "no RSS channel defined for item ~A" item)))
 
-(defmethod initialize-persistent-instance :after ((rss-item rss-item) &key)
+(defmethod initialize-instance :after ((rss-item rss-item) &key)
   (add-item (rss-item-channel rss-item) rss-item))
 
 (defmethod destroy-object :before ((rss-item rss-item))
@@ -240,10 +240,10 @@ RSS-CHANNEL-XML.")
                                  (documentation (format nil "Return the ~(~A~) of the ITEM as a string" field-name))
                                  mandatory)
   `(defgeneric ,(intern (format nil "RSS-ITEM-~A" field-name)) (item)
-    (:documentation ,(format nil "~A~@[ (optional)~]"
-                             documentation (not mandatory)))
-    ,@(unless mandatory
-            '((:method (item) nil)))))
+     (:documentation ,(format nil "~A~@[ (optional)~]"
+                              documentation (not mandatory)))
+     ,@(unless mandatory
+               '((:method (item) nil)))))
 
 (define-rss-item-field channel
     :documentation "Return the channel that the ITEM is published in."

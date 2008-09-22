@@ -8,13 +8,13 @@
 	 :index-reader store-image-with-name
 	 :index-values all-store-images)
    (directory :read :initform nil
-	      :index-type hash-index :index-initargs (:test #'equal)
-	      :index-reader store-images-with-directory
-	      :index-keys all-store-image-directories)
+                    :index-type hash-index :index-initargs (:test #'equal)
+                    :index-reader store-images-with-directory
+                    :index-keys all-store-image-directories)
    (keywords :update :initform nil
-	     :index-type hash-list-index
-	     :index-reader get-keyword-store-images
-	     :index-keys all-image-keywords)
+                     :index-type hash-list-index
+                     :index-reader get-keyword-store-images
+                     :index-keys all-image-keywords)
    
    (width :read :initform 0)
    (height :read :initform 0)))
@@ -55,7 +55,7 @@
 
 (defmacro with-store-image ((var image) &body body)
   `(with-image-from-file (,var (blob-pathname ,image) (image-type-keyword ,image))
-    ,@body))
+     ,@body))
 
 (defmacro with-store-image* ((image) &body body)
   `(with-store-image (cl-gd:*default-image* ,image)
@@ -71,7 +71,7 @@
     (error "invalid image name ~A, needs to contain at least one non-digit character" name))
   (when (store-image-with-name name)
     (error "can't make image with name ~A, an image with this name already exists in the datastore" name))
-  (let ((store-image (apply #'make-object
+  (let ((store-image (apply #'make-instance
 			    class-name
 			    :name name
 			    :type type
@@ -90,10 +90,10 @@
 (defmacro with-store-image-from-id ((var id) &rest body)
   (let ((image (gensym)))
     `(let ((,image (store-object-with-id ,id)))
-      (unless ,image
-	(error "image ~a not found" ,id))
-      (with-store-image (,var ,image)
-	,@body))))
+       (unless ,image
+         (error "image ~a not found" ,id))
+       (with-store-image (,var ,image)
+         ,@body))))
 
 (defun find-image (image-id)
   (etypecase image-id
@@ -121,7 +121,7 @@
         (setf type (make-keyword-from-string type)))
       (with-image-from-file (image pathname type)
         ;; xxx not tx safe.
-        (let ((store-image (apply #'make-object 
+        (let ((store-image (apply #'make-instance 
                                   class-name
                                   :owner user
                                   :timestamp (get-universal-time)
@@ -164,28 +164,28 @@
       (error "imported directory ~a is not a subdir of spool ~a~%"
              pathname spool))
     (loop for file in (image-directory-recursive pathname)
-          when (pathname-name file)
-          collect (handler-case
-                      (let ((image (import-image
-                                    file
-				    :class-name class-name
-                                    :keywords keywords
-				    :user user
-                                    :directory (subseq (cdr (pathname-directory file))
-                                                       (1+ (length path-spool)))
-                                    :keywords-from-dir keywords-from-dir)))
-                        (delete-file file)
-                        (cons file image))
-                    (error (e)
-                      (cons file e)))
-          when (and (not (pathname-name file))
-                    (directory-empty-p file))
-          do
-	  #+allegro
-	  (excl:delete-directory file)
-	  #+cmu
-	  (unix:unix-rmdir (namestring file))
-	  #+sbcl
-	  (sb-posix:rmdir (namestring file))
-      #+openmcl
-      (ccl::%rmdir (namestring file)))))
+       when (pathname-name file)
+       collect (handler-case
+                   (let ((image (import-image
+                                 file
+                                 :class-name class-name
+                                 :keywords keywords
+                                 :user user
+                                 :directory (subseq (cdr (pathname-directory file))
+                                                    (1+ (length path-spool)))
+                                 :keywords-from-dir keywords-from-dir)))
+                     (delete-file file)
+                     (cons file image))
+                 (error (e)
+                   (cons file e)))
+       when (and (not (pathname-name file))
+                 (directory-empty-p file))
+       do
+       #+allegro
+       (excl:delete-directory file)
+       #+cmu
+       (unix:unix-rmdir (namestring file))
+       #+sbcl
+       (sb-posix:rmdir (namestring file))
+       #+openmcl
+       (ccl::%rmdir (namestring file)))))

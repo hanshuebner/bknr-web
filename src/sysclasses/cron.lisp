@@ -28,7 +28,7 @@
 	    (error "Could not find day in day-list")))))
 
 (defparameter *month-list* '(:january :february :march :april :may :june :july
-			    :august :september :october :november :december))
+                             :august :september :october :november :december))
 
 (defun month-p (month)
   (or (and (numberp month)
@@ -109,9 +109,9 @@
     (error "invalid type of job argument, must be either list of forms or a function symbol"))
   (when (cron-job-with-name name)
     (error "can't create cron job ~S - duplicate name" name))
-  (make-object 'cron-job :name name
-	       :job job
-	       :minute minute :hour hour :day day :month month))
+  (make-instance 'cron-job :name name
+                 :job job
+                 :minute minute :hour hour :day day :month month))
 
 (defun all-cron-jobs ()
   (store-objects-with-class 'cron-job))
@@ -149,10 +149,10 @@
 
 (defmethod run-function ((actor cron-actor))
   (loop
-   (sleep (time-until-full-minute (get-universal-time)))
-   (format t "; cron executing jobs at ~A~%" (format-date-time))
-   (dolist (job (remove-if-not #'cron-job-should-execute-p (all-cron-jobs)))
-     (actor-start (make-instance 'cron-job-executor :cron-job job)))))
+     (sleep (time-until-full-minute (get-universal-time)))
+     (format t "; cron executing jobs at ~A~%" (format-date-time))
+     (dolist (job (remove-if-not #'cron-job-should-execute-p (all-cron-jobs)))
+       (actor-start (make-instance 'cron-job-executor :cron-job job)))))
 
 (defvar *cron* nil)
 

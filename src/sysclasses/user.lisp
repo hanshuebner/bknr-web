@@ -12,11 +12,11 @@
 	  :index-reader find-user
 	  :index-values all-users)
    (flags :update :initform nil
-	  :index-type hash-list-index
-	  :index-reader get-flag-users)
+                  :index-type hash-list-index
+                  :index-reader get-flag-users)
    
    (email       :update :initform ""
-		:documentation "Email Address, must be unique")
+                        :documentation "Email Address, must be unique")
    (full-name   :update :initform "")
    (last-login  :update :initform 0)
    (password    :update :initform "")
@@ -40,8 +40,8 @@ class that would be editable and have the USER class be non-editable."))
 
 (defun make-salt ()
   (coerce (loop
-	   for i from 1 upto +salt-length+
-	   collect (code-char (+ 65 (random 26))))
+             for i from 1 upto +salt-length+
+             collect (code-char (+ 65 (random 26))))
 	  'string))
 
 ;;; old crypt function, deprecated
@@ -60,7 +60,7 @@ password against an encrypted one."
 		(user-login object)
 		"unbound"))))
 
-(defmethod initialize-persistent-instance ((user user) &key)
+(defmethod initialize-instance :after ((user user) &key)
   (let* ((plaintext-password (slot-value user 'password))
 	 (password (when plaintext-password (crypt-md5 plaintext-password (make-salt)))))
     (setf (slot-value user 'password) password)))
@@ -72,7 +72,7 @@ password against an encrypted one."
 (define-persistent-class smb-user (user)
   ())
 
-(defmethod initialize-persistent-instance ((user smb-user) &key)
+(defmethod initialize-instance ((user smb-user) &key)
   (let* ((plaintext-password (slot-value user 'password)))
     (when plaintext-password
       (set-smb-password (user-login user) plaintext-password))
@@ -159,11 +159,11 @@ password against an encrypted one."
 
 (defun make-user (login &key password full-name email flags (class 'user))
   (let ((login (string-downcase (string-trim '(#\space) login))))
-    (let ((user (make-object class
-                             :login login
-                             :full-name full-name
-                             :flags flags
-                             :email (and email (string-downcase email)))))
+    (let ((user (make-instance class
+                               :login login
+                               :full-name full-name
+                               :flags flags
+                               :email (and email (string-downcase email)))))
       (when password
         (set-user-password user password))
       user)))
@@ -192,8 +192,8 @@ password against an encrypted one."
 
 (define-persistent-class owned-object (store-object)
   ((owner :update :initform nil
-          :index-type hash-index
-          :index-reader store-object-owner)))
+                  :index-type hash-index
+                  :index-reader store-object-owner)))
 
 (defmethod convert-slot-value-while-restoring ((object owned-object) (slot-name (eql 'owners)) owners)
   (when owners
@@ -219,12 +219,12 @@ password against an encrypted one."
 (defmethod message-event-from-name (event)
   (if (message-event-from event)
       (user-login (message-event-from event))
-    "<system>"))
+      "<system>"))
 
 (defmethod message-event-from-html-link (event)
   (if (message-event-from event)
       (bknr.web::html-link (message-event-from event))
-    (html "&lt;system&gt;")))
+      (html "&lt;system&gt;")))
 
 (defmethod event-argument ((event message-event))
   (format nil "<~a> ~a"

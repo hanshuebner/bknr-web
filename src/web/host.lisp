@@ -43,7 +43,7 @@
   (resolve-ipaddr host)
   (if (not (equal (slot-value host 'name) ""))
       (slot-value host 'name)
-    (host-ip-address host)))
+      (host-ip-address host)))
 
 (defmethod host-ipaddr ((host host))
   (usocket:host-byte-order (host-ip-address host)))
@@ -53,5 +53,5 @@
     (setf ip-address (usocket:hbo-to-dotted-quad ipaddr)))
   (or (host-with-ipaddress ip-address)
       (and create
-	   (make-object 'host :ip-address ip-address))))
+	   (make-instance 'host :ip-address ip-address))))
 
