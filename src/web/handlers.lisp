@@ -447,27 +447,78 @@ provides for a HANDLER-MATCHES-P method."))
 
 (defclass directory-handler (cachable-handler prefix-handler)
   ((destination :initarg :destination
-		:reader page-handler-destination))
+		:reader page-handler-destination)
+   (filename-separator :initarg :filename-separator
+                       :reader directory-handler-filename-separator
+                       :initform nil))
   (:documentation
    "Handler for a directory in the file system.  Publishes all files
-in the directory DESTINATION under their relative path name."))
+in the directory DESTINATION under their relative path name.  Multiple
+files can be served in one request by separating their relative file
+names using the ampersand sign."))
 
-(defgeneric request-relative-pathname (directory-handler)
-  (:documentation "Return the relative pathname for the current
-request as determined by DIRECTORY-HANDLER.")
-  (:method ((handler directory-handler))
-    (or (aux-request-value 'request-relative-pathname)
-        (setf (aux-request-value 'request-relative-pathname)
-              (pathname (subseq (script-name*) (1+ (length (page-handler-prefix handler)))))))))
+(define-condition directory-handler-error (error)
+  ((pathnames-argument :initarg :pathnames-argument))
+  (:report (lambda (e stream)
+             (format stream "~A while processing pathnames argument ~A"
+                     (class-name (class-of e)) (slot-value e 'pathnames-argument)))))
+
+(define-condition invalid-pathname-syntax (directory-handler-error) ())
+(define-condition non-matching-filetypes-in-combination (directory-handler-error) ())
+(define-condition files-not-found (directory-handler-error)
+  ((files :initarg :files))
+  (:report (lambda (e stream)
+             (format stream "~A while processing pathnames argument ~A, file~:P ~S could not be found"
+                     (class-name (class-of e))
+                     (slot-value e 'pathnames-argument)
+                     (slot-value e 'files)))))
+
+(defun request-relative-pathnames (handler)
+  "Return the relative pathnames for the current request as determined
+by DIRECTORY-HANDLER.  Caches the list of validated relative pathnames
+in the aux-request-value 'request-relative-pathnames."
+  (or (aux-request-value 'request-relative-pathnames)
+      (setf (aux-request-value 'request-relative-pathnames)
+            (let* ((pathnames-argument (subseq (script-name*) (1+ (length (page-handler-prefix handler))))))
+              (when (or (search ".." pathnames-argument)
+                        (eql #\/ (aref pathnames-argument 0)))
+                (error 'invalid-pathname-syntax :pathnames-argument pathnames-argument))
+              (let* ((*default-pathname-defaults* (page-handler-destination handler))
+                     (filenames (if (directory-handler-filename-separator handler)
+                                    (mapcar #'pathname (split (directory-handler-filename-separator handler)
+                                                              pathnames-argument))
+                                    pathnames-argument))
+                     (types (mapcar #'pathname-type filenames)))
+                (unless (every #'equal types (cdr types))
+                  (error 'non-matching-filetypes-in-combination :pathnames-argument pathnames-argument))
+                (unless (every #'probe-file filenames)
+                  (error 'files-not-found
+                         :pathnames-argument pathnames-argument
+                         :files (remove-if #'probe-file filenames)))
+                filenames)))))
 
 (defmethod handler-matches-p ((handler directory-handler))
   (and (call-next-method)
-       (probe-file (merge-pathnames (request-relative-pathname handler)
-				    (page-handler-destination handler)))))
+       (let ((*default-pathname-defaults* (page-handler-destination handler)))
+         (some #'probe-file (request-relative-pathnames handler)))))
 
 (defmethod handle ((handler directory-handler))
-  (handle-static-file (merge-pathnames (request-relative-pathname handler)
-				       (page-handler-destination handler))))
+  (let* ((*default-pathname-defaults* (page-handler-destination handler))
+         (last-modified (reduce #'max (mapcar #'file-write-date (request-relative-pathnames handler)))))
+    (handle-if-modified-since last-modified)
+    (let (open-files)
+      (unwind-protect
+           (progn
+             (dolist (pathname (request-relative-pathnames handler))
+               (push (open pathname :element-type '(unsigned-byte 8)) open-files))
+             (setf (header-out :content-type) (or (mime-type (first (request-relative-pathnames handler)))
+                                                  "application/octet-stream")
+                   (header-out :last-modified) (rfc-1123-date last-modified)
+                   (header-out :content-length) (reduce #'+ (mapcar #'file-length open-files)))
+             (let ((out (send-headers)))
+               (dolist (open-file (nreverse open-files))
+                 (copy-stream open-file out))))
+        (mapcar #'close open-files)))))
 
 (defclass file-handler (page-handler)
   ((destination :initarg :destination
@@ -538,6 +589,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
     (handle-object-form handler action object)))
 
 (defmethod handle-object-form ((handler edit-object-handler) action (object (eql nil)))
+  (declare (ignore action))
   (with-bknr-page (:title "No such object")
     (html "No such object, ieeeh")))
 
@@ -573,6 +625,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 
 (defgeneric object-date-list-handler-date (handler object)
   (:method ((handler object-date-list-handler) object)
+    (declare (ignore object))
     (with-query-params (date)
       (get-daytime (if date
                        (or (parse-integer date :junk-allowed t)
