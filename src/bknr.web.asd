@@ -23,12 +23,14 @@
 		 :cxml
 		 :unit-test
 		 :bknr.utils
+		 :bknr.xml
 		 :hunchentoot
                  :drakma
 		 :xhtmlgen
 		 :puri
 		 :usocket
 		 :bknr.datastore
+		 :bknr.data.impex
 		 :parenscript)
 
     :components ((:file "packages")

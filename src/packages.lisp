@@ -19,7 +19,7 @@
 	   #:start-cron))
 
 (defpackage :bknr.rss
-  (:use :cl :cl-user :cl-ppcre :bknr.utils :puri :hunchentoot :bknr.datastore :bknr.indices :cxml)
+  (:use :cl :cl-user :cl-ppcre :bknr.utils :bknr.xml :puri :hunchentoot :bknr.datastore :bknr.indices :cxml)
   (:export ;; channel
 
 	   #:rss-channel
@@ -158,6 +158,7 @@
 	:bknr.indices
 	:bknr.impex
 	:bknr.utils
+	:bknr.xml
 	:bknr.events
 	:bknr.user)
   (:shadowing-import-from :cl-interpol #:quote-meta-chars)
