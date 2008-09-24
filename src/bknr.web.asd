@@ -23,7 +23,6 @@
 		 :cxml
 		 :unit-test
 		 :bknr.utils
-		 :bknr.xml
 		 :hunchentoot
                  :drakma
 		 :xhtmlgen
