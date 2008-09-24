@@ -30,7 +30,6 @@
 		 :puri
 		 :usocket
 		 :bknr.datastore
-		 :bknr.data.impex
 		 :parenscript)
 
     :components ((:file "packages")
