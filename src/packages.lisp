@@ -164,6 +164,7 @@
   (:shadowing-import-from :cl-interpol #:quote-meta-chars)
   (:shadowing-import-from :hunchentoot #:host)
   (:shadowing-import-from :alexandria #:array-index)
+  (:shadowing-import-from :alexandria #:copy-stream #:copy-file)
   (:export #:*user*
 	   #:with-http-request
 	   #:with-http-body
@@ -404,6 +405,7 @@
 	:bknr.user)
   (:shadowing-import-from :cl-interpol #:quote-meta-chars)
   (:shadowing-import-from :bknr.indices #:array-index)
+  (:shadowing-import-from :alexandria #:copy-stream #:copy-file)
   (:export #:imageproc
 	   #:define-imageproc-handler
 	   #:image-handler			; plain images only

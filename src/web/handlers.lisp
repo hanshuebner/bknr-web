@@ -91,7 +91,7 @@ is served within BKNR.  Currently, this is a singleton object, and
       path))
 
 (defmethod website-make-path ((website website) path)
-  (format nil "~A~A" (website-base-href website) (relative path)))
+  (format nil "http://~A/~A" (tbnl:host) (relative path)))
 
 (defgeneric publish-handler (website handler)
   (:documentation "Publish HANDLER on WEBSITE, thereby adding it to
@@ -362,7 +362,7 @@ belongs to the user that is specified in the request."
          (t
           (setf (session-value :login-redirect-uri)
                 (redirect-uri (parse-uri (script-name*))))
-          (redirect (website-make-path *website* "login")))))
+          (redirect "/login"))))
       (t
        'error-404))))
 
