@@ -114,6 +114,7 @@
 
 (defun user-template-prefix ()
   (error 'wtf)
+  #+(or)
   (user-preference (bknr-session-user) :template-path-prefix "file:///Volumes/web/template/"))
 
 ;; xxx new templater
