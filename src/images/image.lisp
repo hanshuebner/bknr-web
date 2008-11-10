@@ -82,9 +82,12 @@
 			    initargs)))
     (ensure-directories-exist (blob-pathname store-image))
     (ignore-errors (delete-file (blob-pathname store-image)))
-    (cl-gd:write-image-to-file (blob-pathname store-image)
-			       :image image
-			       :type type)
+    (apply #'cl-gd:write-image-to-file
+           (blob-pathname store-image)
+           :image image
+           :type type
+           (when (eq type :jpg)
+             (list :quality 95)))
     store-image))
 
 (defmacro with-store-image-from-id ((var id) &rest body)
