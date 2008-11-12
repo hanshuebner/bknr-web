@@ -237,3 +237,9 @@ images become image tags."
 
 (defun encode-urlencoded (string)
   (regex-replace-all #?r"\+" (url-encode string) "%20"))
+
+(defmacro with-json-response (() &body body)
+  `(with-http-response (:content-type "application/json")
+     (with-output-to-string ()
+       (json:with-object ()
+         ,@body))))

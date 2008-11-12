@@ -238,6 +238,8 @@
 
 	   #:bknr-url-path
 
+           #:with-json-response
+
 	   ;; templates
 	   #:expand-template
 	   #:expand-variables

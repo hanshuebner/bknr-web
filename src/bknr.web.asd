@@ -31,7 +31,8 @@
 		 :usocket
 		 :bknr.datastore
 		 :bknr.data.impex
-		 :parenscript)
+		 :parenscript
+                 :yason)
 
     :components ((:file "packages")
 	       
