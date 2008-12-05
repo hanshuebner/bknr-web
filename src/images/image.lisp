@@ -77,7 +77,8 @@
       (:supersede
        (delete-object existing-image))
       (:kill
-       (delete-file (blob-pathname existing-image))
+       (when (probe-file (blob-pathname existing-image))
+         (delete-file (blob-pathname existing-image)))
        (delete-object existing-image))))
   (let ((store-image (apply #'make-instance
 			    class-name
