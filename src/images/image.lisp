@@ -65,12 +65,20 @@
 			 name
 			 (type :png)
 			 directory keywords
+                         (if-exists :error)
 			 (class-name 'store-image)
 			 initargs)
   (unless (scan #?r"\D" name)
     (error "invalid image name ~A, needs to contain at least one non-digit character" name))
-  (when (store-image-with-name name)
-    (error "can't make image with name ~A, an image with this name already exists in the datastore" name))
+  (when-let (existing-image (store-image-with-name name))
+    (ecase if-exists
+      (:error
+       (error "can't make image with name ~A, an image with this name already exists in the datastore" name))
+      (:supersede
+       (delete-object existing-image))
+      (:kill
+       (delete-file (blob-pathname existing-image))
+       (delete-object existing-image))))
   (let ((store-image (apply #'make-instance
 			    class-name
 			    :name name
