@@ -256,6 +256,7 @@
            #:*template-dtd-catalog*
 
 	   ;; handlers
+           #:bknr-dispatch
 	   #:parse-handler-url
 	   #:*website*
 	   #:website

@@ -358,13 +358,13 @@ belongs to the user that is specified in the request."
       (handler
        (cond
          ((authorized-p handler)
-          (curry #'invoke-handler handler))
+          (invoke-handler handler))
          (t
           (setf (session-value :login-redirect-uri)
                 (redirect-uri (parse-uri (script-name*))))
           (redirect "/login"))))
       (t
-       'error-404))))
+       (error-404)))))
 
 (defmethod publish-handler ((website website) (handler page-handler))
   (setf *handlers* (append *handlers* (list handler))))
@@ -487,7 +487,7 @@ in the aux-request-value 'request-relative-pathnames."
                      (filenames (if (directory-handler-filename-separator handler)
                                     (mapcar #'pathname (split (directory-handler-filename-separator handler)
                                                               pathnames-argument))
-                                    pathnames-argument))
+                                    (list pathnames-argument)))
                      (types (mapcar #'pathname-type filenames)))
                 (unless (every #'equal types (cdr types))
                   (error 'non-matching-filetypes-in-combination :pathnames-argument pathnames-argument))
@@ -694,7 +694,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 
 (defmethod handle-object ((handler blob-handler) (blob blob))
   (with-http-response (:content-type (blob-mime-type blob))
-    (setf (content-length) (blob-size blob))
+    (setf (content-length*) (blob-size blob))
     (let ((stream (send-headers)))
       (blob-to-stream blob stream))))
 
@@ -746,7 +746,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 	  (:princ-safe error)))))))
 
 (defun show-page-with-error-handlers (fn &key (response +http-ok+) title)
-  (setf (return-code) response)
+  (setf (return-code*) response)
   (with-http-response (:content-type "text/html; charset=UTF-8" :response response)
     (with-http-body ()
       (website-show-page *website* fn title))))

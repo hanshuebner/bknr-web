@@ -56,8 +56,8 @@ empty string, while in the latter VARIABLE will be bound to NIL."
 
 (defmacro with-http-response ((&key (content-type "text/html") (response +http-ok+)) &body body)
   `(progn
-     (setf (content-type) ,content-type)
-     (setf (return-code) ,response)
+     (setf (content-type*) ,content-type)
+     (setf (return-code*) ,response)
      ,@body))
 
 (defmacro with-http-body ((&key external-format) &body body)
