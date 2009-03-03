@@ -120,6 +120,6 @@ currently generated XHTML output as a comment."
            ,(if root-element
                 `(cxml:with-element ,root-element
                    ,@(when xmlns
-                           `((attribute "xmlns" ,xmlns)))
+                           `((cxml:attribute "xmlns" ,xmlns)))
                    ,@body)
                 `(progn ,@body)))))))
