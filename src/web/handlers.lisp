@@ -374,14 +374,16 @@ belongs to the user that is specified in the request."
 		(script-name*)))
 
 (defclass redirect-handler (page-handler)
-  ((to :initarg :to :reader redirect-handler-to :documentation "url to redirect to")))
+  ((to :initarg :to :reader redirect-handler-to :documentation "url to redirect to")
+   (args :initarg :args :reader redirect-handler-args :documentation "redirect arguments"))
+  (:default-initargs :args nil))
 
 (defmethod initialize-instance :after ((handler redirect-handler) &key to)
   (unless (equal #\/ (aref to 0))
     (warn "path ~S provided as target to redirect-handler does not begin with a slash" to)))
 
 (defmethod handle ((page-handler redirect-handler))
-  (redirect (redirect-handler-to page-handler)))
+  (apply #'redirect (redirect-handler-to page-handler) (redirect-handler-args page-handler)))
 
 (defclass random-redirect-handler (redirect-handler)
   ())
