@@ -484,7 +484,7 @@ in the aux-request-value 'request-relative-pathnames."
               (when (or (search ".." pathnames-argument)
                         (eql #\/ (aref pathnames-argument 0)))
                 (error 'invalid-pathname-syntax :pathnames-argument pathnames-argument))
-              (let* ((*default-pathname-defaults* (page-handler-destination handler))
+              (let* ((*default-pathname-defaults* (pathname (page-handler-destination handler)))
                      (filenames (if (directory-handler-filename-separator handler)
                                     (mapcar #'pathname (split (directory-handler-filename-separator handler)
                                                               pathnames-argument))
@@ -500,11 +500,11 @@ in the aux-request-value 'request-relative-pathnames."
 
 (defmethod handler-matches-p ((handler directory-handler))
   (and (call-next-method)
-       (let ((*default-pathname-defaults* (page-handler-destination handler)))
+       (let ((*default-pathname-defaults* (pathname (page-handler-destination handler))))
          (some #'probe-file (request-relative-pathnames handler)))))
 
 (defmethod handle ((handler directory-handler))
-  (let* ((*default-pathname-defaults* (page-handler-destination handler))
+  (let* ((*default-pathname-defaults* (pathname (page-handler-destination handler)))
          (last-modified (reduce #'max (mapcar #'file-write-date (request-relative-pathnames handler)))))
     (handle-if-modified-since last-modified)
     (let (open-files)
