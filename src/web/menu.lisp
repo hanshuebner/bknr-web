@@ -43,8 +43,7 @@
   (declare (ignore menu-name))
   (let* ((menu (bknr.impex:parse-xml-file
                 #+cmu (ext:unix-namestring (merge-pathnames config *default-pathname-defaults*))
-                #+sbcl (sb-int:unix-namestring (merge-pathnames config *default-pathname-defaults*))
-                #-(or cmu sbcl) (namestring (probe-file (merge-pathnames config *default-pathname-defaults*)))
+                #-cmu (namestring (probe-file (merge-pathnames config *default-pathname-defaults*)))
                 *menu-def-classes*)))
     (html
      ((:div :class container-class)
