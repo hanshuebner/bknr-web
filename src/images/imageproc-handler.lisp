@@ -179,5 +179,5 @@
         (with-http-response (:content-type (image-content-type (image-type-keyword image)))
           (setf (header-out :content-length) (blob-size image))
           (with-open-file (blob-data (blob-pathname image) :element-type '(unsigned-byte 8))
-            (copy-stream blob-data (send-headers) '(unsigned-byte 8)))))))
+            (copy-stream blob-data (send-headers) :element-type '(unsigned-byte 8)))))))
     
