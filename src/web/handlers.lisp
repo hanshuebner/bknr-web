@@ -316,19 +316,11 @@ authorization?"))
 			     (make-hash-table)))
          (*random-state* (make-random-state t)))
     (do-log-request)
-    (handler-bind
-        ((error #'(lambda (e)
-                    (with-http-response (:content-type "text/html; charset=UTF-8"
-                                                       :response +http-internal-server-error+)
-                      (return-from invoke-handler (prog1
-                                                      (with-http-body ()
-                                                        (website-show-error-page *website* e))
-                                                    (do-error-log-request e)))))))
-      (let ((start (get-internal-real-time)))
-        (prog1
-            (handle handler)
-          (let ((duration (- (get-internal-real-time) start)))
-            (note-run-time-for-statistics handler duration)))))))
+    (let ((start (get-internal-real-time)))
+      (prog1
+          (handle handler)
+        (let ((duration (- (get-internal-real-time) start)))
+          (note-run-time-for-statistics handler duration))))))
 
 
 (defmethod handle ((page-handler page-handler))
