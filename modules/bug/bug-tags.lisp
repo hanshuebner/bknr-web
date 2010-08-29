@@ -1,0 +1,200 @@
+(in-package :bknr.bug-tracker)
+
+(define-bknr-tag bug-status-dialog (&key (name "status") (default :open))
+  (select-box name '(("open" "open")
+		     ("closed" "closed")
+		     ("discarded" "discarded")
+		     ("reopened" "reopened"))
+	      :default (string-downcase (symbol-name default))))
+
+(define-bknr-tag bug-priority-dialog (&key (name "priority") (default :normal))
+  (select-box name '(("blocker" "blocker")
+		     ("critical" "critical")
+		     ("major" "major")
+		     ("normal" "normal")
+		     ("minor" "minor")
+		     ("enhancement" "enhancement"))
+	      :default (string-downcase (symbol-name default))))
+
+(define-bknr-tag bug-form (&key bug-id)
+  "Display a formular to create a bug-report"
+  (let ((bug (find-store-object bug-id :class 'bug-report)))
+    (html ((:form :method "POST")
+	   (if bug
+	       (html ((:input :type "hidden"
+			      :name "bug-id"
+			      :value bug-id))
+		     (:table (:tr (:td "name")
+				  (:td ((:input :type "text" :size "50" :name "name"
+						:value (article-subject bug)))))
+			     (:tr (:td "id")
+				  (:td ((:a :href (format nil "/bug-report/~a"
+							  (store-object-id bug)))
+					(:princ-safe (store-object-id bug)))))
+			     (:tr (:td "tracker")
+				  (:td ((:a :href (format nil "/bug-tracker/~a"
+							  (store-object-id
+							   (bug-report-tracker bug))))
+					(:princ-safe (mailinglist-name
+						      (bug-report-tracker bug))))))
+			     (:tr (:td "owner")
+				  (:td (:princ-safe (user-full-name (bug-report-owner bug)))))
+			     (when (bug-report-handler bug)
+			       (html (:tr (:td "handler")
+					  (:td (:princ-safe (user-full-name
+							     (bug-report-handler bug)))))))
+			     (:tr (:td "status")
+				  (:td (bug-status-dialog :default (bug-report-status bug))))
+			     (:tr (:td "priority")
+				  (:td (bug-priority-dialog :default (bug-report-priority bug))))
+			     (:tr (:td "description")
+				  (:td ((:textarea :name "description" :rows "15" :cols "60")
+					(:princ (article-text bug)))))
+			     (:tr ((:td :colspan "2")
+				   (submit-button "save" "save")
+				   (submit-button "close" "close")
+				   (when (eq :closed (bug-report-status bug))
+				     (submit-button "reopen" "reopen"))
+				   (submit-button "handle" "handle")
+				   (submit-button "delete" "delete")))))
+	       (html (:table (:tr (:td "name")
+				  (:td ((:input :type "text" :size "50" :name "name"))))
+			     (:tr (:td "status")
+				  (:td (bug-status-dialog)))
+			     (:tr (:td "priority")
+				  (:td (bug-priority-dialog)))
+			     (:tr (:td "description")
+				  (:td ((:textarea :name "description" :rows "15" :cols "60"))))
+			     (:tr ((:td :colspan "2")
+				   (submit-button "create-bug-report" "create"))))))))))
+
+(define-bknr-tag bug-page (&key bug-id)
+  (let ((bug (find-store-object bug-id :class 'bug-report)))
+    (if bug
+	(html (:h2 "Bug-report: " (:princ-safe (article-subject bug)))
+	      (:table (:tr (:td "tracker")
+			   (:td ((:a :href (format nil "/bug-tracker/~a"
+						   (mailinglist-name (bug-report-tracker bug))))
+				 (:princ-safe (mailinglist-name (bug-report-tracker bug))))))
+		      (:tr (:td "name")
+			   (:td (:princ-safe (article-subject bug))
+				" (" (:princ-safe (store-object-id bug) ")")))
+		      (:tr (:td "status")
+			   (:td (:princ-safe (bug-report-status bug))))
+		      (:tr (:td "priority")
+			   (:td (:princ-safe (bug-report-priority bug))))
+		      (:tr (:td "opened")
+			   (:td (:princ-safe (format-date-time (bug-report-opened bug)
+							       :show-weekday t))))
+		      (when (bug-report-last-modified bug)
+			(html (:tr (:td "last-modified")
+				   (:td (:princ-safe (format-date-time
+						      (bug-report-last-modified bug)
+						      :show-weekday t))))))
+		      (when (bug-report-closed bug)
+			(html (:tr (:td "closed")
+				   (:td (:princ-safe (format-date-time (bug-report-closed bug)
+								       :show-weekday t))))))
+		      (when (bug-report-owner bug)
+			(html (:tr (:td "owner")
+				   (:td (:princ-safe (user-full-name (bug-report-owner bug)))))))
+		      (when (bug-report-handler bug)
+			(html (:tr (:td "handler")
+				   (:td (:princ-safe (user-full-name (bug-report-owner bug)))))))
+		      (:tr (:td "description")
+			   (:td (:princ-safe (article-text bug)))))
+	      (:h3 "Annotations:")
+	      (dolist (annotation (bug-report-annotations bug))
+		(html ((:div :class "txt_content")
+		       ((:div :class "headline")
+			(:princ-safe (article-subject annotation)) " / "
+			(:princ-safe
+			 (format-date-time (article-time annotation) :show-weekday t)) " / "
+			(:princ-safe (user-login (article-author annotation))))
+		       (:princ-safe (article-text annotation)))))
+	      (:h3 "Create an annotation:")
+	      ((:form :method "POST")
+	       (:table (:tr (:td "title")
+			    (:td ((:input :type "text" :size "50" :name "title"))))
+		       (:tr (:td "text")
+			    (:td ((:textarea :name "text" :rows "15" :cols "60"))))
+		       (:tr ((:td :colspan 2)
+			     (submit-button "annotate" "Annotate"))))))
+	(html "Could not find bug with id " (:princ-safe bug-id)))))
+
+(define-bknr-tag bug-tracker-page (&key bug-tracker-id (sort :id))
+  (let ((tracker (find-store-object bug-tracker-id :class 'bug-tracker
+				    :query-function #'mailinglist-with-name)))
+    (if tracker
+	(html (:h2 "Bug-tracker " (:princ-safe (mailinglist-name tracker)))
+	      (:table (:tr (:td "name")
+			   (:td (:princ-safe (mailinglist-name tracker))))
+		      (:tr (:td "email")
+			   (:td (:princ-safe (mailinglist-email tracker))))
+		      (:tr (:td "description")
+			   (:td (:princ-safe (mailinglist-description tracker)))))
+	      (let* ((reports (copy-list (bug-tracker-bug-reports tracker)))
+		     (bug-reports
+		      (case sort
+			(:id (sort reports #'> :key #'store-object-id))
+			(:date (sort reports #'> :key #'bug-report-opened))
+			(:status (sort reports #'string>
+				       :key #'(lambda (bug)
+						(symbol-name (bug-report-status bug)))))
+			(:priority (sort reports #'>
+					 :key #'(lambda (bug)
+						  (priority-to-num (bug-report-priority bug))))))))
+		(html
+		 (:h3 "Bug-reports:")
+		 (:ul (dolist (bug bug-reports)
+			(html (:li ((:a :href (format nil "/bug-report/~a" (store-object-id bug)))
+				    (:princ-safe (article-subject bug)))
+				   (:princ-safe (format nil " (~a : ~a)"
+							(bug-report-status bug)
+							(bug-report-priority bug)))))))
+		 (:h3 "File a new bug-report:")
+		 (bug-form))))
+	(html "Could not find tracker with id " (:princ-safe bug-tracker-id)))))
+
+(define-bknr-tag bug-tracker-form (&key bug-tracker-id)
+  (let ((tracker (find-store-object bug-tracker-id :class 'bug-tracker)))
+    (html
+     ((:form :method "post")
+      (if tracker
+	  (html ((:input :type "hidden"
+			 :name "bug-tracker-id"
+			 :value bug-tracker-id))
+		(:table (:tr (:td "name")
+			     (:td ((:input :type "text" :size "50" :name "name"
+					   :value (mailinglist-name tracker)))))
+			(:tr (:td "id")
+			     (:td ((:a :href (format nil "/bug-tracker/~a"
+						     (store-object-id tracker)))
+				   (:princ-safe (store-object-id tracker)))))
+			(:tr (:td "email")
+			     (:td ((:input :type "text" :size "50" :name "email"
+					   :value (mailinglist-email tracker)))))
+			(:tr (:td "description")
+			     (:td ((:textarea :name "description" :rows "15" :cols "60")
+				   (:princ (mailinglist-description tracker)))))
+			(:tr ((:td :colspan "2")
+			      (submit-button "save" "save")
+			      (submit-button "delete" "delete"))))
+		(:h3 "Bug-reports:")
+		(:ul (dolist (bug (bug-tracker-bug-reports tracker))
+		       (html (:li ((:a :href (format nil "/edit-bug-report/~a"
+						     (store-object-id bug)))
+				   (:princ-safe (article-subject bug)))
+				  (:princ-safe (format nil " (~a : ~a)"
+						       (bug-report-status bug)
+						       (bug-report-priority bug)))))))
+		(:h3 "File a new bug-report:")
+		(bug-form))
+	  (html (:table (:tr (:td "name")
+			     (:td ((:input :type "text" :size "50" :name "name"))))
+			(:tr (:td "email")
+			     (:td ((:input :type "text" :size "50" :name "email"))))
+			(:tr (:td "description")
+			     (:td ((:textarea :name "description" :rows "15" :cols "60"))))
+			(:tr ((:td :colspan "2")
+			      (submit-button "create" "create"))))))))))
