@@ -658,10 +658,11 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 (defgeneric xml-object-handler-show-object (handler object))
 
 (defmethod xml-object-handler-show-object ((handler xml-object-handler) object)
-  (write-to-xml object))
+  (write-to-xml object :output *standard-output*))
 
 (defmethod handle-object ((handler xml-object-handler) object)
   (xml-object-handler-show-object handler object))
+
 
 (defclass xml-object-list-handler (object-handler xml-handler)
   ((toplevel-element-name :initarg :toplevel-element-name :reader xml-object-list-handler-toplevel-element-name))
@@ -674,7 +675,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 
 (defmethod object-list-handler-show-object-xml ((handler xml-object-list-handler) object)
   #+(or) (set-string-rod-fn #'cxml::utf8-string-to-rod)
-  (write-to-xml object))
+  (write-to-xml object :output *standard-output*))
 
 (defmethod handle-object ((handler xml-object-list-handler) object)
   (let ((element-name (xml-object-list-handler-toplevel-element-name handler)))
@@ -743,9 +744,6 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
   (with-http-response (:content-type "text/html; charset=UTF-8" :response response)
     (with-http-body ()
       (website-show-page *website* fn title))))
-
-(defmacro with-bknr-page ((&rest args) &body body)
-  `(show-page-with-error-handlers (lambda () (html ,@body)) ,@args))
 
 #+(or)
 (defmacro with-bknr-site-template ((&key title) &rest body)
