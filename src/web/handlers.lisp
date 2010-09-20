@@ -498,7 +498,7 @@ in the aux-request-value 'request-relative-pathnames."
 (defmethod handle ((handler directory-handler))
   (let* ((*default-pathname-defaults* (pathname (page-handler-destination handler)))
          (last-modified (reduce #'max (mapcar #'file-write-date (request-relative-pathnames handler)))))
-    (handle-if-modified-since last-modified)
+    #-nil(handle-if-modified-since last-modified)
     (let (open-files)
       (unwind-protect
            (progn

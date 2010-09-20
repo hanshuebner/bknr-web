@@ -1,3 +1,4 @@
+
 (in-package :cl-user)
 
 (defpackage :bknr.sysparams
@@ -251,6 +252,7 @@
 	   #:initial-template-environment
 	   #:with-tag-expanders
 	   #:emit-tag-children
+     #:emit-tag-child
 
 	   #:*html-variables*
            #:*template-dtd-catalog*
