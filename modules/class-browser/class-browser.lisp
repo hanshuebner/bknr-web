@@ -31,6 +31,7 @@
 	  (html
 	   (:head
 	    (:title "Class browser for class" class)
+            #+(or)
 	    (js:css (body :font-family "sans-serif"
 			  :font-size "10px")
 		    (h1 :font-size "130%")
