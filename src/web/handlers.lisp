@@ -343,8 +343,11 @@ belongs to the user that is specified in the request."
                                                    (error "cannot find \"anonymous\" user"))))))
   (session-value 'bknr-session))
 
-(defun bknr-dispatch (request)
-  (declare (ignore request))
+(defclass bknr-acceptor (hunchentoot:acceptor)
+  ()
+  (:default-initargs :persistent-connections-p nil))
+
+(defmethod hunchentoot:acceptor-dispatch-request ((acceptor bknr-acceptor) (request hunchentoot:request))
   (let ((handler (find-if #'handler-matches-p (website-handlers *website*))))
     (cond
       (handler

@@ -175,6 +175,8 @@
 	   #:with-bknr-page
 	   #:cmslink
 
+           #:bknr-acceptor
+
 	   #:web-server-log-event-referer
 	   #:web-server-log-event-url
 	   #:web-server-log-event-user-agent
