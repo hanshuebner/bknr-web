@@ -166,6 +166,10 @@ name has been specified.")
   "Function to be called by application defined tags to emit their children."
   (mapc (curry #'emit-template-node *template-expander*) *tag-children*))
 
+(defun emit-tag-child (n)
+  "Function to be called by an application defined tags to emit a specific child, removing whitespace nodes first."
+  (emit-template-node *template-expander* (elt (remove-if #'whitespace-p *tag-children*) n)))
+
 (defvar *namespace-attributes* nil
   "Bound to the list of namespace attributes to emit on the top level node.")
 

@@ -499,19 +499,17 @@ in the aux-request-value 'request-relative-pathnames."
   (let* ((*default-pathname-defaults* (pathname (page-handler-destination handler)))
          (last-modified (reduce #'max (mapcar #'file-write-date (request-relative-pathnames handler)))))
     (handle-if-modified-since last-modified)
-    (let (open-files)
-      (unwind-protect
-           (progn
-             (dolist (pathname (request-relative-pathnames handler))
-               (push (open pathname :element-type '(unsigned-byte 8)) open-files))
-             (setf (header-out :content-type) (or (mime-type (first (request-relative-pathnames handler)))
-                                                  "application/octet-stream")
-                   (header-out :last-modified) (rfc-1123-date last-modified)
-                   (header-out :content-length) (reduce #'+ (mapcar #'file-length open-files)))
-             (let ((out (send-headers)))
-               (dolist (open-file (nreverse open-files))
-                 (copy-stream open-file out))))
-        (mapcar #'close open-files)))))
+    (setf (header-out :content-type) (or (mime-type (first (request-relative-pathnames handler)))
+                                         "application/octet-stream")
+          (header-out :last-modified) (rfc-1123-date last-modified)
+          (header-out :content-length) (reduce #'+ (mapcar (lambda (pathname)
+                                                             (with-open-file (f pathname :element-type '(unsigned-byte 8))
+                                                               (file-length f)))
+                                                           (request-relative-pathnames handler))))
+    (let ((out (send-headers)))
+      (dolist (pathname (request-relative-pathnames handler))
+        (with-open-file (f pathname :element-type '(unsigned-byte 8))
+          (copy-stream f out))))))
 
 (defclass file-handler (page-handler)
   ((destination :initarg :destination
@@ -658,10 +656,11 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 (defgeneric xml-object-handler-show-object (handler object))
 
 (defmethod xml-object-handler-show-object ((handler xml-object-handler) object)
-  (write-to-xml object))
+  (write-to-xml object :output *standard-output*))
 
 (defmethod handle-object ((handler xml-object-handler) object)
   (xml-object-handler-show-object handler object))
+
 
 (defclass xml-object-list-handler (object-handler xml-handler)
   ((toplevel-element-name :initarg :toplevel-element-name :reader xml-object-list-handler-toplevel-element-name))
@@ -674,7 +673,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 
 (defmethod object-list-handler-show-object-xml ((handler xml-object-list-handler) object)
   #+(or) (set-string-rod-fn #'cxml::utf8-string-to-rod)
-  (write-to-xml object))
+  (write-to-xml object :output *standard-output*))
 
 (defmethod handle-object ((handler xml-object-list-handler) object)
   (let ((element-name (xml-object-list-handler-toplevel-element-name handler)))
@@ -743,9 +742,6 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
   (with-http-response (:content-type "text/html; charset=UTF-8" :response response)
     (with-http-body ()
       (website-show-page *website* fn title))))
-
-(defmacro with-bknr-page ((&rest args) &body body)
-  `(show-page-with-error-handlers (lambda () (html ,@body)) ,@args))
 
 #+(or)
 (defmacro with-bknr-site-template ((&key title) &rest body)

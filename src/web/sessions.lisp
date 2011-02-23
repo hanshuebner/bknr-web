@@ -18,7 +18,7 @@
   (slot-value (bknr-session) 'user))
 
 (defun do-log-request ()
-  (format *debug-io* "Log: ~A~%" (script-name*))
+  (format *debug-io* "Log: ~A ~A~%" (script-name*) (or (query-string*) ""))
   (return-from do-log-request)
   #+(or)
   (let* ((session (bknr-session))
