@@ -15,7 +15,6 @@
 	:bknr.datastore
 	:bknr.impex
 	:bknr.events
-	:xhtml-generator
-	:parenscript)
+	:xhtml-generator)
   (:shadowing-import-from :cl-interpol quote-meta-chars)
   (:shadowing-import-from :parenscript while in create))
