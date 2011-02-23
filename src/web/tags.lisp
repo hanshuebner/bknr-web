@@ -143,7 +143,7 @@ Example:
 <bknr:logo />
 
 "
-  (html ((:img :style (parenscript:css-inline :float "right") :src (website-site-logo-url *website*) :alt "logo"))))
+  (html ((:img :style "float: right" :src (website-site-logo-url *website*) :alt "logo"))))
 	
 (define-bknr-tag body-style (&key background-color background-image)
   "Outputs the body style css definition
