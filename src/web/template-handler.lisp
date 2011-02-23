@@ -7,7 +7,7 @@
 (defvar *template-expander*)
 (defvar *template-env*)
 (defparameter *template-dtd-catalog*
-  (list (namestring (merge-pathnames #P"../../../../thirdparty/xhtml/catalog.xml" *load-pathname*))))
+  (list (namestring (merge-pathnames #"dtd/catalog.xml" *load-pathname*))))
 
 (eval-when (:load-toplevel :execute)
   (setf cxml:*catalog* (cxml:make-catalog *template-dtd-catalog*)
