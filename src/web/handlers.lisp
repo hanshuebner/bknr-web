@@ -656,7 +656,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 (defgeneric xml-object-handler-show-object (handler object))
 
 (defmethod xml-object-handler-show-object ((handler xml-object-handler) object)
-  (write-to-xml object :output *standard-output*))
+  (write-to-xml object))
 
 (defmethod handle-object ((handler xml-object-handler) object)
   (xml-object-handler-show-object handler object))
@@ -673,7 +673,7 @@ OBJECT, which is parsed using the mechanism of an OBJECT-HANDLER."))
 
 (defmethod object-list-handler-show-object-xml ((handler xml-object-list-handler) object)
   #+(or) (set-string-rod-fn #'cxml::utf8-string-to-rod)
-  (write-to-xml object :output *standard-output*))
+  (write-to-xml object))
 
 (defmethod handle-object ((handler xml-object-list-handler) object)
   (let ((element-name (xml-object-list-handler-toplevel-element-name handler)))
