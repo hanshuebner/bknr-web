@@ -289,6 +289,7 @@
 	   #:handle-form
 	   #:object-handler-object-class
 	   #:object-handler-get-object
+           #:object-handler-query-function
 	   #:require-user-flag
 
 	   #:bknr-authorizer
