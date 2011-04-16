@@ -80,6 +80,9 @@
 								 "sessions"
 								 "site"))
 
+                                             (:file "backbone-handler"
+                                                    :depends-on ("handlers"))
+
                                              (:file "handler-statistics-handler"
                                                     :depends-on ("handlers"))
 

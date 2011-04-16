@@ -316,6 +316,8 @@
 	   #:directory-handler
 	   #:file-handler
 
+           #:backbone-handler
+
 	   #:keyword-handler
 	   #:keywords-handler
 
