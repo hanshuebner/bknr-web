@@ -7,10 +7,11 @@
 (defvar *template-expander*)
 (defvar *template-env*)
 (defparameter *template-dtd-catalog*
-  (list (namestring (merge-pathnames #"dtd/catalog.xml" *load-pathname*))))
+  (list (namestring (merge-pathnames #"web/dtd/catalog.xml" (asdf:system-source-directory :bknr.web)))))
 
 (eval-when (:load-toplevel :execute)
   (setf cxml:*catalog* (cxml:make-catalog *template-dtd-catalog*)
+        cxml::*default-catalog* *template-dtd-catalog*
 	cxml:*dtd-cache* (cxml:make-dtd-cache)
 	cxml:*cache-all-dtds* t))
 
