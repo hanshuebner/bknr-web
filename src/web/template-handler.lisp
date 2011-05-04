@@ -7,10 +7,11 @@
 (defvar *template-expander*)
 (defvar *template-env*)
 (defparameter *template-dtd-catalog*
-  (list (namestring (merge-pathnames #"dtd/catalog.xml" *load-pathname*))))
+  (list (namestring (merge-pathnames #"web/dtd/catalog.xml" (asdf:system-source-directory :bknr.web)))))
 
 (eval-when (:load-toplevel :execute)
   (setf cxml:*catalog* (cxml:make-catalog *template-dtd-catalog*)
+        cxml::*default-catalog* *template-dtd-catalog*
 	cxml:*dtd-cache* (cxml:make-dtd-cache)
 	cxml:*cache-all-dtds* t))
 
@@ -136,7 +137,8 @@ name has been specified.")
   ;; CXML-XMLS::COMPUTE-ATTRIBUTES/LNAMES function.  This may need to
   ;; be revised with newer cxml releases.
   (let* ((sax:*include-xmlns-attributes* t)
-         (dom (cxml:parse-file (namestring (probe-file template-pathname))
+         (dom (cxml:parse-file (namestring (or (probe-file template-pathname)
+                                               (error "template file ~A not found" template-pathname)))
                                (cxml-xmls:make-xmls-builder)
                                :validate nil))
          real-attributes
