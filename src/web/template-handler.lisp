@@ -137,7 +137,8 @@ name has been specified.")
   ;; CXML-XMLS::COMPUTE-ATTRIBUTES/LNAMES function.  This may need to
   ;; be revised with newer cxml releases.
   (let* ((sax:*include-xmlns-attributes* t)
-         (dom (cxml:parse-file (namestring (probe-file template-pathname))
+         (dom (cxml:parse-file (namestring (or (probe-file template-pathname)
+                                               (error "template file ~A not found" template-pathname)))
                                (cxml-xmls:make-xmls-builder)
                                :validate nil))
          real-attributes
