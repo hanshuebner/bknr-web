@@ -23,7 +23,8 @@
 
 (define-bknr-tag redirect-request (&key target)
   ;; target here is relative to the current request
-  (redirect (princ-to-string (puri:merge-uris target (script-name*)))))
+  (redirect (princ-to-string
+             (puri:merge-uris target (format nil "~@[~A~]~A" (header-in* :origin) (script-name*))))))
 
 (define-bknr-tag select-box (name options &key (size 1) default)
   (html ((:select :name name :size size)
