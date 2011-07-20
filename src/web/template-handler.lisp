@@ -312,29 +312,44 @@ name has been specified.")
 (defmethod error-template-pathname (handler &optional (error-type "user-error"))
   (find-template-pathname handler error-type))
 
-(defun send-error-response (handler message &key (response-code +http-internal-server-error+))
+(defun send-error-response (handler message backtrace &key (response-code +http-internal-server-error+))
   (with-http-response (:content-type "text/html; charset=UTF-8"
 				     :response response-code)
     (with-output-to-string (stream)
       (emit-template handler
 		     stream
 		     (get-cached-template (error-template-pathname handler) handler)
-		     (acons :error-message message
-			    (initial-template-environment
-			     handler))))))
+		     (acons :error message
+                            (acons :backtrace backtrace
+                                   (initial-template-environment handler)))))))
 
 (defun invoke-with-error-handlers (fn handler)
-  (handler-case
-      (funcall fn)
-    (user-error (c)
-      (send-error-response handler (apply #'format
-                                          nil
-                                          (simple-condition-format-control c)
-                                          (simple-condition-format-arguments c))
-                           :response-code +http-ok+))
-    (serious-condition (c)
-      (warn "unexpected failure: ~A" c)
-      (send-error-response handler (format nil "Internal Error:~%~%~A~%" c)))))
+  ;; For now, remove our own error template mechanism and instead rely
+  ;; on hunchentoot's error handling, which should be sufficient
+  ;; anyway.
+  (declare (ignore handler))
+  (funcall fn)
+  #+(or)
+  (let (backtrace)
+    (handler-case
+        (handler-bind
+            ((error (lambda (e)
+                      (declare (ignore e))
+                      (setf backtrace (with-output-to-string (s)
+                                        #+sbcl
+                                        (sb-debug:backtrace 30 s))))))
+          (funcall fn))
+      (user-error (c)
+        (send-error-response handler
+                             (apply #'format
+                                    nil
+                                    (simple-condition-format-control c)
+                                    (simple-condition-format-arguments c))
+                             backtrace
+                             :response-code +http-ok+))
+      (serious-condition (c)
+        (warn "unexpected failure: ~A" c)
+        (send-error-response handler backtrace (format nil "Internal Error:~%~%~A~%" c))))))
 
 (defmacro with-error-handlers ((handler) &body body)
   `(invoke-with-error-handlers (lambda () ,@body) ,handler))
