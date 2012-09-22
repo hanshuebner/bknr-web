@@ -32,7 +32,8 @@
 		 :bknr.datastore
 		 :bknr.data.impex
 		 :parenscript
-                 :yason)
+                 :yason
+                 :skippy)
 
     :components ((:file "packages")
 	       
