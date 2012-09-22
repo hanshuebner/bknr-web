@@ -11,7 +11,7 @@
     (unless (zerop date)
       (setf (header-out :last-modified) (rfc-1123-date date)))
     (let ((stream (send-headers)))      
-      (setf (save-alpha-p :image image) t)
+      (setf (save-alpha-p image) t)
       (if (member image-format '(:jpg :jpeg))
 	  (write-image-to-stream stream image-format :image image :quality quality)
 	  (write-image-to-stream stream image-format :image image))
