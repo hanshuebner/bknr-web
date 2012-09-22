@@ -61,16 +61,26 @@
   `(with-store-image (cl-gd:*default-image* ,image)
      ,@body))
 
+(defun pathname-image-type (pathname)
+  (case (find-symbol (string-upcase (pathname-type pathname)) :keyword)
+    (:png :png)
+    ((:jpg :jpeg) :jpg)
+    (:gif :gif)
+    (t (error "unknown image file type ~S" (pathname-type pathname)))))
+
 (defun make-store-image (&key (image *default-image*)
 			 name
-			 (type :png)
+                         original-pathname
+			 (type :png type-provided-p)
 			 directory keywords
                          (if-exists :error)
 			 (class-name 'store-image)
-                         original-pathname
 			 initargs)
   (unless (scan #?r"\D" name)
     (error "invalid image name ~A, needs to contain at least one non-digit character" name))
+  (when (and original-pathname
+             (not type-provided-p))
+    (setf type (pathname-image-type original-pathname)))
   (when-let (existing-image (store-image-with-name name))
     (ecase if-exists
       (:error
@@ -172,7 +182,7 @@
                  (directory (merge-pathnames #P"**/*.*" pathname))))
 
 (defun import-directory (pathname &key user keywords (spool *user-spool-directory-root*)
-			 keywords-from-dir (class-name 'store-image) (delete-files t))
+			 keywords-from-dir (class-name 'store-image))
   "Import all files from directory by giving them relative names"
   (let ((path-spool (cdr (pathname-directory spool))))
     (unless (subdir-p pathname spool)
