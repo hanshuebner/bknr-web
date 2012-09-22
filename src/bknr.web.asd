@@ -33,7 +33,8 @@
 		 :bknr.data.impex
 		 :parenscript
                  :yason
-                 :skippy)
+                 :skippy
+                 :temporary-file)
 
     :components ((:file "packages")
 	       

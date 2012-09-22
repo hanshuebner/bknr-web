@@ -35,7 +35,8 @@
 
 (defun imageproc-gif (store-image operations)
   (let* ((input-stream (skippy:load-data-stream (blob-pathname store-image)))
-         (tmp-pathname "/tmp/gif-resize-tmp.gif")
+         (tmp-pathname (temporary-file:with-open-temporary-file (tmp-stream)
+                         (pathname tmp-stream)))
          output-stream
          previous-raw-image)
     (dolist (input-frame (coerce (skippy:images input-stream) 'list))
@@ -64,7 +65,7 @@
           (unwind-protect
                (progn
                  (cl-gd:true-color-to-palette :dither t :image transformed-image)
-                 (cl-gd:write-image-to-file tmp-pathname :image transformed-image :if-exists :supersede)
+                 (cl-gd:write-image-to-file tmp-pathname :image transformed-image :type :gif :if-exists :supersede)
                  (unless output-stream
                    (setf output-stream (skippy:make-data-stream :width (image-width transformed-image)
                                                                 :height (image-height transformed-image)
