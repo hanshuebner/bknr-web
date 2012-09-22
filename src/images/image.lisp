@@ -67,6 +67,7 @@
 			 directory keywords
                          (if-exists :error)
 			 (class-name 'store-image)
+                         original-pathname
 			 initargs)
   (unless (scan #?r"\D" name)
     (error "invalid image name ~A, needs to contain at least one non-digit character" name))
@@ -91,12 +92,14 @@
 			    initargs)))
     (ensure-directories-exist (blob-pathname store-image))
     (ignore-errors (delete-file (blob-pathname store-image)))
-    (apply #'cl-gd:write-image-to-file
-           (blob-pathname store-image)
-           :image image
-           :type type
-           (when (eq type :jpg)
-             (list :quality 95)))
+    (if original-pathname
+        (copy-file original-pathname (blob-pathname store-image))
+        (apply #'cl-gd:write-image-to-file
+               (blob-pathname store-image)
+               :image image
+               :type type
+               (when (eq type :jpg)
+                 (list :quality 95))))
     store-image))
 
 (defmacro with-store-image-from-id ((var id) &rest body)
