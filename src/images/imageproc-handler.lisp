@@ -48,17 +48,12 @@
                                  tmp-pathname)
       (let ((raw-image (create-image-from-file tmp-pathname :gif)))
         (when previous-raw-image
-          (cond
-            ((or (< (cl-gd:image-width raw-image) (skippy:width input-stream))
-                 (< (cl-gd:image-height raw-image) (skippy:height input-stream)))
-             (cl-gd:copy-image raw-image previous-raw-image
-                               0 0
-                               (skippy:left-position input-frame) (skippy:top-position input-frame)
-                               (cl-gd:image-width raw-image) (cl-gd:image-height raw-image))
-             (destroy-image raw-image)
-             (setf raw-image previous-raw-image))
-            (t
-             (destroy-image previous-raw-image))))
+          (cl-gd:copy-image raw-image previous-raw-image
+                            0 0
+                            (skippy:left-position input-frame) (skippy:top-position input-frame)
+                            (cl-gd:image-width raw-image) (cl-gd:image-height raw-image))
+          (destroy-image raw-image)
+          (setf raw-image previous-raw-image))
         (setf previous-raw-image (create-image (image-width raw-image) (image-height raw-image) (true-color-p raw-image)))
         (copy-image raw-image previous-raw-image 0 0 0 0 (image-width raw-image) (image-height raw-image))
         (let ((transformed-image (imageproc% raw-image operations)))
