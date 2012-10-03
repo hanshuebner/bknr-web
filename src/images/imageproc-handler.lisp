@@ -93,7 +93,7 @@
                                     :delay-time (skippy:delay-time input-frame))))
           (destroy-image transformed-frame)))
       (ecase (skippy:disposal-method input-frame)
-        ((:none :unspecific))
+        ((:none :unspecified))
         (:restore-background
          (draw-rectangle* (skippy:left-position input-frame) (skippy:top-position input-frame)
                           (skippy:width input-frame) (skippy:height input-frame)
