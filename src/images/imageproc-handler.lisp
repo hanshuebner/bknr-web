@@ -38,7 +38,16 @@
          (tmp-pathname (temporary-file:with-open-temporary-file (tmp-stream)
                          (pathname tmp-stream)))
          output-stream
-         previous-raw-image)
+         #+keep-gif-resize-frames (frame-no 0)
+         (frame (create-image (skippy:width input-stream) (skippy:height input-stream) t))
+         (previous-frame (create-image (skippy:width input-stream) (skippy:height input-stream) t)))
+    (setf (alpha-blending-p frame) t
+          (alpha-blending-p previous-frame) t)
+    (draw-rectangle* 0 0
+                     (skippy:width input-stream) (skippy:height input-stream)
+                     :filled t
+                     :color (find-color 255 255 255 :alpha 0 :image frame)
+                     :image frame)
     (dolist (input-frame (coerce (skippy:images input-stream) 'list))
       (skippy:output-data-stream (skippy:make-data-stream :width (skippy:width input-stream)
                                                           :height (skippy:height input-stream)
@@ -46,39 +55,55 @@
                                                                            (skippy:color-table input-stream))
                                                           :initial-images (list input-frame))
                                  tmp-pathname)
+      #+keep-gif-resize-frames
+      (copy-file tmp-pathname (make-pathname :name (format nil "~A-~D" (pathname-name tmp-pathname) (incf frame-no))
+                                             :type "gif"
+                                             :defaults tmp-pathname))
       (let ((raw-image (create-image-from-file tmp-pathname :gif)))
-        (when previous-raw-image
-          (cl-gd:copy-image raw-image previous-raw-image
-                            0 0
-                            (skippy:left-position input-frame) (skippy:top-position input-frame)
-                            (cl-gd:image-width raw-image) (cl-gd:image-height raw-image))
-          (destroy-image raw-image)
-          (setf raw-image previous-raw-image))
-        (setf previous-raw-image (create-image (image-width raw-image) (image-height raw-image) (true-color-p raw-image)))
-        (copy-image raw-image previous-raw-image 0 0 0 0 (image-width raw-image) (image-height raw-image))
-        (let ((transformed-image (imageproc% raw-image operations)))
-          (unwind-protect
-               (progn
-                 (cl-gd:true-color-to-palette :dither t :image transformed-image)
-                 (cl-gd:write-image-to-file tmp-pathname :image transformed-image :type :gif :if-exists :supersede)
-                 (unless output-stream
-                   (setf output-stream (skippy:make-data-stream :width (image-width transformed-image)
-                                                                :height (image-height transformed-image)
-                                                                :loopingp (skippy:loopingp input-stream)
-                                                                :color-table (skippy:color-table input-stream))))
-                 (let* ((resized-frame-stream (skippy:load-data-stream tmp-pathname))
-                        (resized-frame (aref (skippy:images resized-frame-stream) 0)))
-                   (skippy:make-image :width (skippy:width output-stream)
-                                      :height (skippy:height output-stream)
-                                      :data-stream output-stream
-                                      :image-data (skippy:image-data resized-frame)
-                                      :color-table (or (skippy:color-table resized-frame)
-                                                       (skippy:color-table resized-frame-stream))
-                                      :delay-time (skippy:delay-time input-frame))))
-            (unless (eq transformed-image raw-image)
-              (destroy-image transformed-image))))))
-    (when previous-raw-image
-      (destroy-image previous-raw-image))
+        (copy-image frame previous-frame 0 0 0 0 (image-width frame) (image-height frame))
+        (copy-image raw-image frame
+                    0 0
+                    (skippy:left-position input-frame) (skippy:top-position input-frame)
+                    (skippy:width input-frame) (skippy:height input-frame))
+        (destroy-image raw-image))
+      (let ((transformed-frame (create-image (image-width frame) (image-height frame) t)))
+        (copy-image frame transformed-frame 0 0 0 0 (image-width frame) (image-height frame))
+        (setf transformed-frame (imageproc% transformed-frame operations))
+        (unwind-protect
+             (progn
+               (true-color-to-palette :dither t :image transformed-frame)
+               (write-image-to-file tmp-pathname :image transformed-frame :type :gif :if-exists :supersede)
+               #+keep-gif-resize-frames
+               (copy-file tmp-pathname (make-pathname :name (format nil "~A-~D-processed" (pathname-name tmp-pathname) frame-no)
+                                                      :type "gif"
+                                                      :defaults tmp-pathname))
+               (unless output-stream
+                 (setf output-stream (skippy:make-data-stream :width (image-width transformed-frame)
+                                                              :height (image-height transformed-frame)
+                                                              :loopingp (skippy:loopingp input-stream)
+                                                              :color-table (skippy:color-table input-stream))))
+               (let* ((resized-frame-stream (skippy:load-data-stream tmp-pathname))
+                      (resized-frame (aref (skippy:images resized-frame-stream) 0)))
+                 (skippy:make-image :width (skippy:width output-stream)
+                                    :height (skippy:height output-stream)
+                                    :data-stream output-stream
+                                    :image-data (skippy:image-data resized-frame)
+                                    :color-table (or (skippy:color-table resized-frame)
+                                                     (skippy:color-table resized-frame-stream))
+                                    :delay-time (skippy:delay-time input-frame))))
+          (destroy-image transformed-frame)))
+      (ecase (skippy:disposal-method input-frame)
+        ((:none :unspecific))
+        (:restore-background
+         (draw-rectangle* (skippy:left-position input-frame) (skippy:top-position input-frame)
+                          (skippy:width input-frame) (skippy:height input-frame)
+                          :filled t
+                          :color (find-color 255 255 255 :alpha 0 :image frame)
+                          :image frame))
+        (:restore-previous
+         (copy-image previous-frame frame 0 0 0 0 (image-width previous-frame) (image-height previous-frame)))))
+    (destroy-image frame)
+    (destroy-image previous-frame)
     (delete-file tmp-pathname)
     (with-http-response (:content-type (image-content-type :gif))
       (let ((stream (send-headers)))
