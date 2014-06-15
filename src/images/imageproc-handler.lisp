@@ -21,7 +21,7 @@
 
 (defun imageproc (image operations)
   (with-store-image (input-image image)
-    (setf (save-alpha-p :image input-image) t)
+    (setf (save-alpha-p input-image) t)
     (let ((working-image input-image))
       (dolist (operation operations)
         (destructuring-bind (operation-name &rest args) (substitute nil "" (split "," operation) :test #'equal)
