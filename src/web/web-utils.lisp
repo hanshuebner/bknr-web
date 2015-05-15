@@ -240,6 +240,6 @@ images become image tags."
 
 (defmacro with-json-response (() &body body)
   `(with-http-response (:content-type "application/json")
-     (json:with-output-to-string* ()
-       (json:with-object ()
+     (yason:with-output-to-string* ()
+       (yason:with-object ()
          ,@body))))

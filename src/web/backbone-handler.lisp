@@ -49,7 +49,7 @@
 
 (defmethod backbone-handler-parse-json ((handler backbone-handler) json)
   "Parse the JSON into an alist, removing blacklisted slots and slots not whitelisted."
-  (let ((alist (alexandria:hash-table-alist (json:parse json)))
+  (let ((alist (alexandria:hash-table-alist (yason:parse json)))
         (blacklist (mapcar #'symbol-to-json (backbone-handler-slot-blacklist handler)))
         (whitelist (mapcar #'symbol-to-json (backbone-handler-slot-whitelist handler))))
     (remove-if #'(lambda (x)
