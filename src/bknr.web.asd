@@ -1,15 +1,9 @@
 ;; -*- mode: lisp -*-
-(in-package :cl-user)
-
-(defpackage :bknr.web.system
-  (:use :cl :asdf))
-
-(in-package :bknr.web.system)
 
 (defsystem :bknr.web
     :name "Baikonour - Base modules"
-    :author "Hans Huebner <hans@huebner.org>"
-    :author "Manuel Odendahl <manuel@bl0rg.net>"
+    :author ("Hans Huebner <hans@huebner.org>"
+             "Manuel Odendahl <manuel@bl0rg.net>")
     :version "0"
     :maintainer "Manuel Odendahl <manuel@bl0rg.net>"
     :licence "BSD"
@@ -35,7 +29,6 @@
                  :yason)
 
     :components ((:file "packages")
-	       
 		 (:module "sysclasses" :components ((:file "event")
 						    (:file "user" :depends-on ("event"))
 						    (:file "cron")
@@ -109,7 +102,6 @@
 			  :depends-on ("web"))
 
 		 (:module "images" :components ((:file "image")
-						
 						(:file "image-tags" :depends-on ("image"))
 						(:file "image-handlers"
 						       :depends-on ("image-tags" "image"))
