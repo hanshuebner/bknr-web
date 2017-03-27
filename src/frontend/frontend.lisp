@@ -11,12 +11,6 @@
 (defparameter *frontend-verbose* nil)
 (defparameter *frontend-debug* nil)
 
-(defun execute-shell (fmt &rest args)
-  (let ((command (apply #'format nil fmt args)))
-    (when *frontend-debug*
-      (format t "; $ ~A~%" command))
-    (asdf:run-shell-command command)))
-
 (defun frontend-pid-file ()
   (merge-pathnames #P"bknr-web-frontend.pid" *varnish-directory*))
 
@@ -24,7 +18,7 @@
   (merge-pathnames #P"config.vcl" *varnish-directory*))
 
 (defun read-pid-file (&key (errorp t))
-  (asdf:run-shell-command (format nil "sudo chmod 644 ~A" (namestring (frontend-pid-file))))
+  (uiop:run-program `("sudo" "chmod" "644" ,(uiop:native-namestring (frontend-pid-file))))
   (let ((pid (with-open-file (in (frontend-pid-file))
 	       (read in nil))))
     (when (and (null pid) errorp)
@@ -33,11 +27,10 @@
 
 (defun frontend-version ()
   (handler-case
-      (let ((varnishd-v (with-output-to-string (asdf::*verbose-out*)
-			  (execute-shell "varnishd -V"))))
+      (let ((varnishd-v (uiop:run-program '("varnishd" "-V") :output :string)))
 	(or (when (ppcre:scan "varnish-trunk" varnishd-v) 'trunk)
 	    (ppcre:register-groups-bind (version-string)
-		("varnish-(\\d+(?:\\.\\d+)+)" varnishd-v)	
+		("varnish-(\\d+(?:\\.\\d+)+)" varnishd-v)
 	      (mapcar #'parse-integer  (ppcre:split "\\." version-string)))
 	    (error 'error)))
     (error () (error "Cannot determine frontend version."))))
@@ -45,13 +38,15 @@
 (defun frontend-running-p ()
   (and (probe-file (frontend-pid-file))
        (read-pid-file :errorp nil)	; pid file might be empty
-       (zerop (execute-shell "sudo kill -0 ~D" (read-pid-file)))))
+       (zerop
+        (nth-value 2 (uiop:run-program `("sudo" "kill" "-0" ,(princ-to-string (read-pid-file)))
+                                       :ignore-error-status t)))))
 
 (defun stop-frontend (&key verbose)
   (cond
     ((frontend-running-p)
      (when verbose (format t "~&; Stopping frontend with PID ~D..." (read-pid-file)))
-     (execute-shell "sudo kill ~D" (read-pid-file))
+     (uiop:run-program `("sudo" "kill" ,(princ-to-string (read-pid-file))))
      (dotimes (i 10
                (error "Frontend could not be stopped"))
        (unless (frontend-running-p)
@@ -83,14 +78,12 @@
     ;; start frontend
     (when verbose
       (format t "; Starting varnishd frontend process on ~@[~A~]:~A~%" host port))
-    (let ((exit-code (execute-shell "sudo varnishd -a ~@[~A~]:~D ~
-                                   -f '~A' ~
-                                   -n '~A' ~
-                                   -P '~A'"
-                                    host port
-                                    (frontend-config-file)
-                                    (namestring varnish-directory)
-                                    (namestring (frontend-pid-file)))))
+    (let ((exit-code (nth-value 2 (uiop:run-program
+                                   `("sudo" "varnishd" "-a"
+                                     ,(format nil "~@[~A~]:~D" host port)
+                                     "-f" ,(uiop:native-namestring (frontend-config-file))
+                                     "-n" ,(uiop:native-namestring varnish-directory)
+                                     "-P" ,(uiop:native-namestring (frontend-pid-file)))))))
       (unless (zerop exit-code)
         (error "Attempt to launch varnishd exit code ~D.~
               ~%Among other possible reasons, it might be that:~
