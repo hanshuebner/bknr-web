@@ -111,14 +111,17 @@
         (skippy:write-data-stream output-stream stream)
         (finish-output stream)))))
 
+(defvar *current-image*)
+
 (defun imageproc (store-image operations)
-  (if (eq :gif (image-type-keyword store-image))
-      (imageproc-gif store-image operations)
-      (let* ((working-image (create-image-from-file (blob-pathname store-image) (image-type-keyword store-image)))
-             (processed-image (imageproc% working-image operations)))
-        (unwind-protect
-             (emit-image-to-browser processed-image (image-type-keyword store-image))
-          (destroy-image processed-image)))))
+  (let ((*current-image* store-image))
+    (if (eq :gif (image-type-keyword store-image))
+        (imageproc-gif store-image operations)
+        (let* ((working-image (create-image-from-file (blob-pathname store-image) (image-type-keyword store-image)))
+               (processed-image (imageproc% working-image operations)))
+          (unwind-protect
+               (emit-image-to-browser processed-image (image-type-keyword store-image))
+            (destroy-image processed-image))))))
 #+(or)
 (unless (member type '(:jpg :jpeg))
   (when (true-color-p input-image)

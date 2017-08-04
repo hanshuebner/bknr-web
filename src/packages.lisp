@@ -415,6 +415,7 @@
   (:shadowing-import-from :cl-interpol #:quote-meta-chars)
   (:shadowing-import-from :bknr.indices #:array-index)
   (:export #:imageproc
+           #:*current-image*
 	   #:define-imageproc-handler
 	   #:image-handler			; plain images only
 	   #:imageproc-handler			; image with processing
