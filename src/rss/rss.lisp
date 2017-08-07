@@ -141,17 +141,18 @@ CHANNEL to STREAM.")
     (unless days
       (setf days (or (days-from-query-parameter)
                      (rss-channel-max-item-age channel))))
-    (if all
-        (remove-if #'object-destroyed-p (slot-value channel 'items))
-        (let ((items (if month
-                         (cdr (find month (rss-channel-archive channel) :test #'equal :key #'car))
-                         (let ((expiry-time (- (get-universal-time) (* 60 60 24 days))))
-                           (remove-if (lambda (item) (or (object-destroyed-p item)
-                                                         (< (rss-item-pub-date item) expiry-time)))
-                                      (slot-value channel 'items))))))
-          (if count
-              (subseq items 0 (min count (length items)))
-              items)))))
+    (let ((items (remove-if-not #'identity (slot-value channel 'items))))
+      (if all
+          (remove-if #'object-destroyed-p items)
+          (let ((items (if month
+                           (cdr (find month (rss-channel-archive channel) :test #'equal :key #'car))
+                           (let ((expiry-time (- (get-universal-time) (* 60 60 24 days))))
+                             (remove-if (lambda (item) (or (object-destroyed-p item)
+                                                           (< (rss-item-pub-date item) expiry-time)))
+                                        items)))))
+            (if count
+                (subseq items 0 (min count (length items)))
+                items))))))
 
 (defgeneric rss-channel-archived-months (channel)
   (:documentation "Return a list of lists (MONTH YEAR) for which the
